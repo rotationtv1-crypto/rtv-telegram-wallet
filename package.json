@@ -1,0 +1,22 @@
+{
+  "name": "rtv-telegram-wallet",
+  "version": "0.1.0",
+  "description": "Open source Telegram wallet bot by RTV",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest"
+  },
+  "keywords": ["telegram", "wallet", "crypto", "bot", "open-source"],
+  "license": "MIT",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0",
+    "ethers": "^6.0.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0",
+    "jest": "^29.0.0"
+  }
+}
