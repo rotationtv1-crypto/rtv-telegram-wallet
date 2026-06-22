@@ -2,10 +2,12 @@
  * rtv-telegram-wallet — Supabase client
  */
 
+// Keys: SUPABASE_SECRET_KEY (sb_secret_...) for server | NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (sb_publishable_...) for client
+// Both require: apikey header + Authorization: Bearer header
 const SUPABASE_URL = 'https://xynkgaxfwvpcixissxdz.supabase.co';
 
 function getKey() {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY;
   if (!key) throw new Error('SUPABASE_SERVICE_ROLE_KEY not set');
   return key;
 }
