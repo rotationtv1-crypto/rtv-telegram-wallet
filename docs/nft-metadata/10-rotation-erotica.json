@@ -1,0 +1,14 @@
+{
+  "name": "Rotation Erotica — Rose Gold Brand",
+  "description": "Official Rotation Erotica brand visual. Rose gold on charcoal. 18+ creator platform. Part of the RTV NFT marketplace.",
+  "image": "https://base44.app/api/apps/69db6144f66afe8317b2d0d7/files/mp/public/69db6144f66afe8317b2d0d7/b137d373f_899fcea38_file_30.jpg",
+  "external_url": "https://rotationtvai.com",
+  "attributes": [
+    {"trait_type": "Brand", "value": "Rotation Erotica"},
+    {"trait_type": "Category", "value": "Brand Visual"},
+    {"trait_type": "Color", "value": "Rose Gold on Charcoal"},
+    {"trait_type": "Content Rating", "value": "18+"},
+    {"trait_type": "Rarity", "value": "Epic"},
+    {"trait_type": "Owner", "value": "Darrel — CEO"}
+  ]
+}
