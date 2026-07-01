@@ -1,0 +1,70 @@
+{
+  "type": "object",
+  "properties": {
+    "creator_id": {
+      "type": "string",
+      "description": "RTVUser ID"
+    },
+    "milestone_type": {
+      "type": "string",
+      "enum": [
+        "first_stream",
+        "followers_100",
+        "followers_500",
+        "followers_1k",
+        "followers_10k",
+        "first_100_rtv",
+        "first_1k_rtv",
+        "first_10k_rtv",
+        "pk_first_win",
+        "pk_10_wins",
+        "hours_100",
+        "hours_500",
+        "verified_creator",
+        "top_weekly"
+      ],
+      "description": "Type of milestone achieved"
+    },
+    "milestone_name": {
+      "type": "string",
+      "description": "Display name of milestone"
+    },
+    "reward_rtv": {
+      "type": "number",
+      "description": "RTV bonus for achieving milestone"
+    },
+    "reward_badge": {
+      "type": "string",
+      "description": "Badge emoji or identifier"
+    },
+    "achieved_at": {
+      "type": "string",
+      "description": "ISO timestamp when achieved"
+    },
+    "notified": {
+      "type": "boolean",
+      "description": "Has creator been notified?"
+    },
+    "metadata": {
+      "type": "string",
+      "description": "Additional context (stream ID, battle ID, etc)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "achieved",
+        "rewarded",
+        "pending_notification"
+      ],
+      "description": "Milestone status"
+    }
+  },
+  "required": [
+    "creator_id",
+    "milestone_type",
+    "milestone_name",
+    "achieved_at",
+    "status"
+  ],
+  "name": "CreatorMilestone"
+}

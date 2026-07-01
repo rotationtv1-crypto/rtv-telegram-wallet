@@ -1,0 +1,74 @@
+{
+  "type": "object",
+  "properties": {
+    "tier_name": {
+      "type": "string",
+      "enum": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ]
+    },
+    "price_usd_monthly": {
+      "type": "number"
+    },
+    "price_rtv_monthly": {
+      "type": "number"
+    },
+    "price_usd_quarterly": {
+      "type": "number"
+    },
+    "price_usd_annual": {
+      "type": "number"
+    },
+    "perks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of unlocked perks for this tier"
+    },
+    "badge_emoji": {
+      "type": "string"
+    },
+    "badge_color": {
+      "type": "string"
+    },
+    "priority_chat": {
+      "type": "boolean",
+      "default": false
+    },
+    "dm_access": {
+      "type": "boolean",
+      "default": false
+    },
+    "exclusive_content": {
+      "type": "boolean",
+      "default": false
+    },
+    "discount_on_gifts_pct": {
+      "type": "number",
+      "default": 0
+    },
+    "free_gifts_monthly": {
+      "type": "number",
+      "default": 0,
+      "description": "Free RTV gifted monthly as a perk"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "tier_name",
+    "price_usd_monthly",
+    "is_active"
+  ],
+  "name": "SubscriptionTier"
+}

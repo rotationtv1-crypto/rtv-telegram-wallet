@@ -1,0 +1,79 @@
+{
+  "type": "object",
+  "properties": {
+    "split_name": {
+      "type": "string",
+      "description": "Name of the revenue split configuration"
+    },
+    "creator_share_pct": {
+      "type": "number",
+      "description": "Percentage to creator (default 80)"
+    },
+    "platform_share_pct": {
+      "type": "number",
+      "description": "Percentage to platform (default 15)"
+    },
+    "agency_share_pct": {
+      "type": "number",
+      "description": "Percentage to agency (default 5, 0 if no agency)"
+    },
+    "creator_tier_multiplier": {
+      "type": "number",
+      "description": "Multiplier for top-tier creators (1.0 = standard, 1.1 = 10% bonus)"
+    },
+    "min_payout_usd": {
+      "type": "number",
+      "description": "Minimum balance required for withdrawal"
+    },
+    "payout_schedule": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "biweekly",
+        "monthly",
+        "instant"
+      ],
+      "description": "How often creators get paid"
+    },
+    "instant_payout_fee_pct": {
+      "type": "number",
+      "description": "Fee for instant withdrawals (default 5%)"
+    },
+    "combo_bonus_pct": {
+      "type": "number",
+      "description": "Bonus for gift combos (default 20% of base tip)"
+    },
+    "pk_winner_bonus_pct": {
+      "type": "number",
+      "description": "Extra bonus for PK battle winners"
+    },
+    "first_stream_bonus_rtv": {
+      "type": "number",
+      "description": "Bonus RTV for first stream"
+    },
+    "milestone_bonus_rtv": {
+      "type": "number",
+      "description": "Bonus when hitting follower milestones"
+    },
+    "is_default": {
+      "type": "boolean",
+      "description": "Is this the default split config?"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Is this configuration active?"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "split_name",
+    "creator_share_pct",
+    "platform_share_pct",
+    "agency_share_pct",
+    "payout_schedule",
+    "is_active"
+  ],
+  "name": "RevenueSplit"
+}

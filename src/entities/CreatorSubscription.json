@@ -1,0 +1,100 @@
+{
+  "type": "object",
+  "properties": {
+    "creator_id": {
+      "type": "string",
+      "description": "RTVUser ID of the creator"
+    },
+    "subscriber_id": {
+      "type": "string",
+      "description": "RTVUser ID of the fan/subscriber"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "default": "bronze"
+    },
+    "price_usd": {
+      "type": "number",
+      "description": "Monthly subscription price"
+    },
+    "price_rtv": {
+      "type": "number",
+      "description": "RTV token equivalent"
+    },
+    "creator_share_rtv": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled",
+        "expired",
+        "paused",
+        "trial"
+      ],
+      "default": "active"
+    },
+    "billing_cycle": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "quarterly",
+        "annual"
+      ],
+      "default": "monthly"
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "next_billing_at": {
+      "type": "string"
+    },
+    "cancelled_at": {
+      "type": "string"
+    },
+    "auto_renew": {
+      "type": "boolean",
+      "default": true
+    },
+    "perks_unlocked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "DM access, exclusive content, priority chat, etc."
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "rtv_balance",
+        "stripe",
+        "ton",
+        "free_trial"
+      ],
+      "default": "rtv_balance"
+    },
+    "stripe_subscription_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "creator_id",
+    "subscriber_id",
+    "tier",
+    "status"
+  ],
+  "name": "CreatorSubscription"
+}

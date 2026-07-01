@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "user_name": {
+      "type": "string"
+    },
+    "user_email": {
+      "type": "string"
+    },
+    "mentor_id": {
+      "type": "string"
+    },
+    "messages": {
+      "type": "array"
+    },
+    "topic": {
+      "type": "string"
+    },
+    "company_interest": {
+      "type": "string"
+    },
+    "lead_score": {
+      "type": "number"
+    },
+    "converted": {
+      "type": "boolean"
+    },
+    "conversion_type": {
+      "type": "string"
+    },
+    "total_messages": {
+      "type": "number"
+    },
+    "last_active": {
+      "type": "string"
+    },
+    "referral_code": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "closed",
+        "converted",
+        "follow_up"
+      ]
+    }
+  },
+  "required": [],
+  "name": "MentorSession"
+}

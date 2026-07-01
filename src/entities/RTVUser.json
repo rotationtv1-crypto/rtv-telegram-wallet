@@ -1,0 +1,224 @@
+{
+  "type": "object",
+  "properties": {
+    "telegram_id": {
+      "type": "number",
+      "description": "Telegram user ID (primary identifier for TON ecosystem users)"
+    },
+    "username": {
+      "type": "string",
+      "description": "Platform username (unique)"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string",
+      "description": "Creator bio / tagline"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "pt",
+        "fr",
+        "ar",
+        "hi",
+        "zh",
+        "ko",
+        "ja"
+      ],
+      "default": "en"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "viewer",
+        "creator",
+        "moderator",
+        "admin",
+        "agency"
+      ],
+      "default": "viewer"
+    },
+    "is_creator": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "verification_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "email",
+        "phone",
+        "identity",
+        "blue_check"
+      ],
+      "default": "none"
+    },
+    "age_verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "kyc_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "not_started"
+    },
+    "rtv_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Current spendable RTV token balance"
+    },
+    "pending_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Balance in escrow / pending payout"
+    },
+    "total_earnings_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "total_earnings_rtv": {
+      "type": "number",
+      "default": 0
+    },
+    "lifetime_tips_received": {
+      "type": "number",
+      "default": 0
+    },
+    "lifetime_tips_sent": {
+      "type": "number",
+      "default": 0
+    },
+    "followers_count": {
+      "type": "number",
+      "default": 0
+    },
+    "following_count": {
+      "type": "number",
+      "default": 0
+    },
+    "total_stream_hours": {
+      "type": "number",
+      "default": 0
+    },
+    "stream_count": {
+      "type": "number",
+      "default": 0
+    },
+    "safety_score": {
+      "type": "number",
+      "default": 100,
+      "description": "0-100 trust/safety score (AI + moderation driven)"
+    },
+    "reputation_tier": {
+      "type": "string",
+      "enum": [
+        "new",
+        "rising",
+        "established",
+        "elite",
+        "legendary"
+      ],
+      "default": "new"
+    },
+    "loyalty_tier": {
+      "type": "string",
+      "enum": [
+        "none",
+        "bronze",
+        "silver",
+        "gold",
+        "platinum",
+        "diamond"
+      ],
+      "default": "none"
+    },
+    "referral_code": {
+      "type": "string",
+      "description": "Unique referral code for user"
+    },
+    "referred_by": {
+      "type": "string",
+      "description": "Referral code of who referred this user"
+    },
+    "agency_id": {
+      "type": "string",
+      "description": "Agency/manager ID if signed with one"
+    },
+    "ton_wallet_address": {
+      "type": "string"
+    },
+    "social_links": {
+      "type": "object",
+      "description": "JSON: {twitter, instagram, tiktok, youtube, website}"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Creator content tags (gaming, music, talk, etc.)"
+    },
+    "payout_ready": {
+      "type": "boolean",
+      "default": false,
+      "description": "KYC done + wallet connected + eligible for payouts"
+    },
+    "tax_form_status": {
+      "type": "string",
+      "enum": [
+        "not_submitted",
+        "pending",
+        "approved",
+        "expired"
+      ],
+      "default": "not_submitted"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "suspended",
+        "banned",
+        "deleted"
+      ],
+      "default": "active"
+    },
+    "last_active_at": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "username",
+    "role",
+    "status"
+  ],
+  "name": "RTVUser"
+}

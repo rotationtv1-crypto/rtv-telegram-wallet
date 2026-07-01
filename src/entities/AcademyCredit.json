@@ -1,0 +1,66 @@
+{
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "credit_type": {
+      "type": "string",
+      "enum": [
+        "earned",
+        "purchased",
+        "granted",
+        "bonus",
+        "referral",
+        "refunded"
+      ]
+    },
+    "amount": {
+      "type": "number",
+      "description": "Credit amount (positive=add, negative=deduct)"
+    },
+    "balance_after": {
+      "type": "number"
+    },
+    "description": {
+      "type": "string"
+    },
+    "course_id": {
+      "type": "string"
+    },
+    "course_name": {
+      "type": "string"
+    },
+    "nft_diploma_minted": {
+      "type": "boolean"
+    },
+    "nft_mint_address": {
+      "type": "string"
+    },
+    "rtv_module": {
+      "type": "string"
+    },
+    "transaction_ref": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "expired",
+        "pending",
+        "cancelled"
+      ]
+    }
+  },
+  "required": [
+    "user_id",
+    "credit_type",
+    "amount",
+    "status"
+  ],
+  "name": "AcademyCredit"
+}

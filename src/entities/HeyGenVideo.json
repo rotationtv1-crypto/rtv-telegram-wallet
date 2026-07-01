@@ -1,0 +1,64 @@
+{
+  "type": "object",
+  "properties": {
+    "video_id": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "company": {
+      "type": "string"
+    },
+    "rtv_module": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "generating",
+        "completed",
+        "failed"
+      ]
+    },
+    "script": {
+      "type": "string"
+    },
+    "avatar_id": {
+      "type": "string"
+    },
+    "voice_id": {
+      "type": "string"
+    },
+    "video_url": {
+      "type": "string"
+    },
+    "thumbnail_url": {
+      "type": "string"
+    },
+    "heygen_page_url": {
+      "type": "string"
+    },
+    "duration_sec": {
+      "type": "number"
+    },
+    "triggered_by": {
+      "type": "string"
+    },
+    "callback_received": {
+      "type": "boolean"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "name": "HeyGenVideo"
+}

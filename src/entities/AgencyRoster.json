@@ -1,0 +1,95 @@
+{
+  "type": "object",
+  "properties": {
+    "agency_name": {
+      "type": "string"
+    },
+    "owner_name": {
+      "type": "string"
+    },
+    "owner_id": {
+      "type": "string",
+      "description": "RTVUser ID of the agency owner"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "creator_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of RTVUser IDs managed by this agency"
+    },
+    "creator_count": {
+      "type": "number",
+      "default": 0
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "starter",
+        "growth",
+        "professional",
+        "enterprise"
+      ],
+      "default": "starter"
+    },
+    "commission_rate_pct": {
+      "type": "number",
+      "default": 20,
+      "description": "Agency commission on creator earnings (decreases as tier increases)"
+    },
+    "total_earnings_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "monthly_revenue_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "stripe_account_id": {
+      "type": "string"
+    },
+    "stripe_onboarding_complete": {
+      "type": "boolean",
+      "default": false
+    },
+    "api_key": {
+      "type": "string",
+      "description": "Agency API key for dashboard access"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "suspended"
+      ],
+      "default": "pending"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "agency_name",
+    "owner_name",
+    "owner_id",
+    "status"
+  ],
+  "name": "AgencyRoster"
+}

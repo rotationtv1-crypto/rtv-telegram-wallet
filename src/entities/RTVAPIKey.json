@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "properties": {
+    "merchant_id": {
+      "type": "string"
+    },
+    "key_name": {
+      "type": "string"
+    },
+    "api_key": {
+      "type": "string"
+    },
+    "key_type": {
+      "type": "string",
+      "enum": [
+        "live",
+        "test",
+        "webhook",
+        "reseller"
+      ]
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rate_limit_per_min": {
+      "type": "number"
+    },
+    "monthly_call_limit": {
+      "type": "number"
+    },
+    "calls_this_month": {
+      "type": "number"
+    },
+    "last_used": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "revoked",
+        "expired",
+        "pending"
+      ]
+    },
+    "ip_whitelist": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "enum": [
+        "live",
+        "sandbox"
+      ]
+    },
+    "revenue_generated": {
+      "type": "number"
+    }
+  },
+  "required": [],
+  "name": "RTVAPIKey"
+}

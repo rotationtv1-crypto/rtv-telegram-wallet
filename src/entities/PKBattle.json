@@ -1,0 +1,107 @@
+{
+  "type": "object",
+  "properties": {
+    "challenger_id": {
+      "type": "string",
+      "description": "RTVUser ID of challenger"
+    },
+    "opponent_id": {
+      "type": "string",
+      "description": "RTVUser ID of opponent"
+    },
+    "stream_id": {
+      "type": "string",
+      "description": "Combined PK stream ID"
+    },
+    "stake_amount_rtv": {
+      "type": "number",
+      "description": "RTV each creator stakes (total pool = stake x 2)"
+    },
+    "battle_type": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "premium",
+        "tournament",
+        "custom"
+      ],
+      "default": "standard"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "active",
+        "completed",
+        "cancelled",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "winner_id": {
+      "type": "string"
+    },
+    "loser_id": {
+      "type": "string"
+    },
+    "challenger_tips_rtv": {
+      "type": "number",
+      "default": 0,
+      "description": "Total fan tips supporting challenger"
+    },
+    "opponent_tips_rtv": {
+      "type": "number",
+      "default": 0
+    },
+    "challenger_tipper_count": {
+      "type": "number",
+      "default": 0
+    },
+    "opponent_tipper_count": {
+      "type": "number",
+      "default": 0
+    },
+    "total_pool_rtv": {
+      "type": "number",
+      "default": 0
+    },
+    "winner_payout_rtv": {
+      "type": "number",
+      "description": "60% of pool"
+    },
+    "loser_payout_rtv": {
+      "type": "number",
+      "description": "10% of pool"
+    },
+    "platform_fee_rtv": {
+      "type": "number",
+      "description": "30% of pool"
+    },
+    "duration_min": {
+      "type": "number",
+      "default": 10
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "ended_at": {
+      "type": "string"
+    },
+    "viewers_peak": {
+      "type": "number",
+      "default": 0
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "challenger_id",
+    "opponent_id",
+    "stake_amount_rtv",
+    "battle_type",
+    "status"
+  ],
+  "name": "PKBattle"
+}

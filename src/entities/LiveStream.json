@@ -1,0 +1,188 @@
+{
+  "type": "object",
+  "properties": {
+    "creator_id": {
+      "type": "string",
+      "description": "RTVUser ID of the streamer"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "gaming",
+        "music",
+        "talk",
+        "dance",
+        "lifestyle",
+        "cooking",
+        "pk_battle",
+        "multi_guest",
+        "event",
+        "irl",
+        "education",
+        "comedy"
+      ],
+      "default": "talk"
+    },
+    "stream_key": {
+      "type": "string",
+      "description": "RTMP stream key (unique, generated)"
+    },
+    "rtmp_url": {
+      "type": "string",
+      "default": "rtmp://live.rotationtv.network/live"
+    },
+    "playback_url": {
+      "type": "string",
+      "description": "HLS/DASH playback URL from Cloudflare Stream"
+    },
+    "cloudflare_stream_id": {
+      "type": "string"
+    },
+    "thumbnail_url": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "waiting",
+        "live",
+        "ended",
+        "failed"
+      ],
+      "default": "scheduled"
+    },
+    "room_type": {
+      "type": "string",
+      "enum": [
+        "solo",
+        "multi_guest",
+        "pk_battle",
+        "event"
+      ],
+      "default": "solo",
+      "description": "Multi-guest = Bigo-style audio rooms, PK = head-to-head"
+    },
+    "max_guests": {
+      "type": "number",
+      "default": 0,
+      "description": "For multi-guest rooms (Bigo-style): 0 = solo, up to 9 for co-hosts"
+    },
+    "guest_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "RTVUser IDs of active co-hosts/guests in multi-guest rooms"
+    },
+    "viewer_count": {
+      "type": "number",
+      "default": 0
+    },
+    "peak_viewers": {
+      "type": "number",
+      "default": 0
+    },
+    "total_tips_rtv": {
+      "type": "number",
+      "default": 0,
+      "description": "Total RTV tipped during this stream"
+    },
+    "total_tips_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "tip_count": {
+      "type": "number",
+      "default": 0
+    },
+    "unique_tippers": {
+      "type": "number",
+      "default": 0
+    },
+    "top_tipper_id": {
+      "type": "string"
+    },
+    "top_tip_amount": {
+      "type": "number",
+      "default": 0
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "ended_at": {
+      "type": "string"
+    },
+    "duration_sec": {
+      "type": "number",
+      "default": 0
+    },
+    "is_recording": {
+      "type": "boolean",
+      "default": true
+    },
+    "recording_url": {
+      "type": "string",
+      "description": "VOD playback URL after stream ends"
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "language": {
+      "type": "string",
+      "default": "en"
+    },
+    "country": {
+      "type": "string"
+    },
+    "is_age_restricted": {
+      "type": "boolean",
+      "default": false
+    },
+    "moderation_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "AI moderation flags (nudity, violence, spam, etc.)"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "description": "For scheduled streams/events"
+    },
+    "event_ticket_price_usd": {
+      "type": "number",
+      "default": 0,
+      "description": "0 = free, >0 = paid event"
+    },
+    "event_capacity": {
+      "type": "number",
+      "default": 0,
+      "description": "Max viewers for paid events (0 = unlimited)"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "creator_id",
+    "title",
+    "category",
+    "status",
+    "room_type"
+  ],
+  "name": "LiveStream"
+}

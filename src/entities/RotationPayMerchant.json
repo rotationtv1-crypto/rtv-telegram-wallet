@@ -1,0 +1,112 @@
+{
+  "type": "object",
+  "properties": {
+    "business_name": {
+      "type": "string"
+    },
+    "owner_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "business_type": {
+      "type": "string",
+      "enum": [
+        "individual",
+        "company",
+        "nonprofit",
+        "government_entity"
+      ]
+    },
+    "stripe_account_id": {
+      "type": "string"
+    },
+    "stripe_onboarding_url": {
+      "type": "string"
+    },
+    "stripe_charges_enabled": {
+      "type": "boolean"
+    },
+    "stripe_payouts_enabled": {
+      "type": "boolean"
+    },
+    "paypal_merchant_id": {
+      "type": "string"
+    },
+    "api_key": {
+      "type": "string"
+    },
+    "api_key_live": {
+      "type": "string"
+    },
+    "api_key_test": {
+      "type": "string"
+    },
+    "plan": {
+      "type": "string",
+      "enum": [
+        "starter",
+        "growth",
+        "enterprise",
+        "reseller"
+      ]
+    },
+    "monthly_volume": {
+      "type": "number"
+    },
+    "total_volume": {
+      "type": "number"
+    },
+    "revenue_share_pct": {
+      "type": "number"
+    },
+    "rtv_cashback_pct": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "onboarding",
+        "active",
+        "suspended",
+        "churned"
+      ]
+    },
+    "rails_enabled": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "webhook_url": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "kyc_verified": {
+      "type": "boolean"
+    },
+    "audit_tier": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "premium",
+        "rothschild"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "name": "RotationPayMerchant"
+}

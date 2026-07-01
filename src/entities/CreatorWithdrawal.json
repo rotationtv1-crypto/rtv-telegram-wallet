@@ -1,0 +1,101 @@
+{
+  "type": "object",
+  "properties": {
+    "creator_id": {
+      "type": "string",
+      "description": "RTVUser ID of the creator requesting withdrawal"
+    },
+    "amount_rtv": {
+      "type": "number",
+      "description": "RTV tokens being withdrawn"
+    },
+    "amount_usd": {
+      "type": "number",
+      "description": "USD equivalent at time of withdrawal"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "ton_wallet",
+        "solana_wallet",
+        "stripe_direct",
+        "paypal",
+        "crypto_bot",
+        "internal_credit"
+      ],
+      "description": "Withdrawal method"
+    },
+    "destination_address": {
+      "type": "string",
+      "description": "Wallet address or payment destination"
+    },
+    "fee_rtv": {
+      "type": "number",
+      "description": "Withdrawal fee in RTV"
+    },
+    "fee_usd": {
+      "type": "number",
+      "description": "Withdrawal fee in USD"
+    },
+    "net_rtv": {
+      "type": "number",
+      "description": "RTV after fees"
+    },
+    "net_usd": {
+      "type": "number",
+      "description": "USD after fees"
+    },
+    "tx_hash": {
+      "type": "string",
+      "description": "Blockchain transaction hash if applicable"
+    },
+    "stripe_transfer_id": {
+      "type": "string",
+      "description": "Stripe transfer ID if applicable"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "requested",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled",
+        "under_review"
+      ],
+      "description": "Withdrawal status"
+    },
+    "requested_at": {
+      "type": "string",
+      "description": "ISO timestamp of request"
+    },
+    "processed_at": {
+      "type": "string",
+      "description": "ISO timestamp when processed"
+    },
+    "completed_at": {
+      "type": "string",
+      "description": "ISO timestamp when completed"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error message if failed"
+    },
+    "agency_id": {
+      "type": "string",
+      "description": "Agency ID if withdrawal goes through agency"
+    },
+    "review_notes": {
+      "type": "string",
+      "description": "Admin review notes if under_review"
+    }
+  },
+  "required": [
+    "creator_id",
+    "amount_rtv",
+    "amount_usd",
+    "method",
+    "status"
+  ],
+  "name": "CreatorWithdrawal"
+}

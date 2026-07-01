@@ -1,0 +1,67 @@
+{
+  "type": "object",
+  "properties": {
+    "audit_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string"
+    },
+    "entity": {
+      "type": "string"
+    },
+    "entity_id": {
+      "type": "string"
+    },
+    "actor": {
+      "type": "string"
+    },
+    "actor_role": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "amount_usd": {
+      "type": "number"
+    },
+    "amount_rtv": {
+      "type": "number"
+    },
+    "rail": {
+      "type": "string"
+    },
+    "stripe_event_id": {
+      "type": "string"
+    },
+    "risk_score": {
+      "type": "number"
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "jurisdiction": {
+      "type": "string"
+    },
+    "tax_category": {
+      "type": "string"
+    },
+    "is_suspicious": {
+      "type": "boolean"
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "raw_payload": {
+      "type": "string"
+    }
+  },
+  "required": [],
+  "name": "OmegaAuditLog"
+}
