@@ -1,0 +1,13 @@
+{
+  "name": "RTV Avatar — Neon Warrior",
+  "description": "Cyberpunk avatar from the RotationTV Network brand collection. Electric blue accents with circuit patterns.",
+  "image": "https://base44.app/api/apps/69db6144f66afe8317b2d0d7/files/mp/public/69db6144f66afe8317b2d0d7/21d67d746_78f65acd1_file_0.jpg",
+  "external_url": "https://rotationtvai.com",
+  "attributes": [
+    {"trait_type": "Brand", "value": "RotationTV Network"},
+    {"trait_type": "Category", "value": "Avatar NFT"},
+    {"trait_type": "Style", "value": "Cyberpunk"},
+    {"trait_type": "Rarity", "value": "Rare"},
+    {"trait_type": "Owner", "value": "Darrel — CEO"}
+  ]
+}
