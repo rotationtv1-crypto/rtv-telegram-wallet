@@ -1,0 +1,14 @@
+{
+  "name": "RotationTV Network — Hero Collection",
+  "description": "4 diverse cyberpunk avatars (Asian, Black, Middle Eastern, Latinx) in RotationTV branded gear. Neon-lime #CCFF00, obsidian black, electric blue. The official hero image of the RotationTV Network ecosystem.",
+  "image": "https://base44.app/api/apps/69db6144f66afe8317b2d0d7/files/mp/public/69db6144f66afe8317b2d0d7/af07567ab_a4154e182_file_24.jpg",
+  "external_url": "https://rotationtvai.com",
+  "attributes": [
+    {"trait_type": "Brand", "value": "RotationTV Network"},
+    {"trait_type": "Category", "value": "Hero Image"},
+    {"trait_type": "Color Palette", "value": "Neon-Lime #CCFF00 / Obsidian #0A0A0A / Electric Blue #00BFFF"},
+    {"trait_type": "Year", "value": "2036"},
+    {"trait_type": "Rarity", "value": "Legendary"},
+    {"trait_type": "Owner", "value": "Darrel — CEO"}
+  ]
+}
