@@ -1,0 +1,15 @@
+{
+  // RTV Edge Gateway — Unified API Router for 9 Companies
+  "name": "rtv-edge-gateway",
+  "main": "src/index.js",
+  "compatibility_date": "2024-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "RTV_VERSION": "3.0.0",
+    "RTV_ENV": "production"
+  }
+}
