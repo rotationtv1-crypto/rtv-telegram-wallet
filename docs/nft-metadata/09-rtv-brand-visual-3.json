@@ -1,0 +1,12 @@
+{
+  "name": "RTV Brand — Future Vision",
+  "description": "Official RotationTV Network future vision visual. Part of the RTV NFT marketplace collection.",
+  "image": "https://base44.app/api/apps/69db6144f66afe8317b2d0d7/files/mp/public/69db6144f66afe8317b2d0d7/77583698f_2856ec868_file_25.jpg",
+  "external_url": "https://rotationtvai.com",
+  "attributes": [
+    {"trait_type": "Brand", "value": "RotationTV Network"},
+    {"trait_type": "Category", "value": "Brand Visual"},
+    {"trait_type": "Rarity", "value": "Uncommon"},
+    {"trait_type": "Owner", "value": "Darrel — CEO"}
+  ]
+}
