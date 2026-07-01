@@ -1,0 +1,13 @@
+{
+  "name": "$RTV Token — Official Logo",
+  "description": "The official RTV token logo. 256px circular design representing the RotationTV Network ecosystem currency. 1 RTV = $0.01 USD.",
+  "image": "https://base44.app/api/apps/69db6144f66afe8317b2d0d7/files/mp/public/69db6144f66afe8317b2d0d7/772599e53_rtv_token_logo_256.png",
+  "external_url": "https://rotationtvai.com",
+  "attributes": [
+    {"trait_type": "Brand", "value": "RotationTV Network"},
+    {"trait_type": "Category", "value": "Token Logo"},
+    {"trait_type": "Token Standard", "value": "1 RTV = $0.01 USD"},
+    {"trait_type": "Blockchain", "value": "TON + Solana"},
+    {"trait_type": "Rarity", "value": "Epic"},
+    {"trait_type": "Owner", "value": "Darrel — CEO"}
+  ]
