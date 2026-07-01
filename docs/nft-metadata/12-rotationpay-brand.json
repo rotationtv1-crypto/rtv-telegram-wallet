@@ -1,0 +1,14 @@
+{
+  "name": "RotationPay — One Gateway",
+  "description": "Holographic payment terminal with multi-rail icons. The official RotationPay brand visual. 10 payment rails in one gateway.",
+  "image": "https://media.base44.com/images/public/69db6144f66afe8317b2d0d7/1e2b451ad_generated_image.png",
+  "external_url": "https://rotationpay.com",
+  "attributes": [
+    {"trait_type": "Brand", "value": "RotationPay"},
+    {"trait_type": "Category", "value": "Brand Visual"},
+    {"trait_type": "Generation", "value": "AI Generated"},
+    {"trait_type": "Payment Rails", "value": "10"},
+    {"trait_type": "Rarity", "value": "Epic"},
+    {"trait_type": "Owner", "value": "Darrel — CEO"}
+  ]
+}
