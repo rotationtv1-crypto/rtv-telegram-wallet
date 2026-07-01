@@ -1,0 +1,13 @@
+{
+  "name": "RTV Avatar — Cyberpunk Guardian",
+  "description": "Cyberpunk avatar from the RotationTV Network brand collection. Neon-lime circuit overlays on obsidian background.",
+  "image": "https://base44.app/api/apps/69db6144f66afe8317b2d0d7/files/mp/public/69db6144f66afe8317b2d0d7/3a5575bb7_7721a1013_file_1.jpg",
+  "external_url": "https://rotationtvai.com",
+  "attributes": [
+    {"trait_type": "Brand", "value": "RotationTV Network"},
+    {"trait_type": "Category", "value": "Avatar NFT"},
+    {"trait_type": "Style", "value": "Cyberpunk"},
+    {"trait_type": "Rarity", "value": "Rare"},
+    {"trait_type": "Owner", "value": "Darrel — CEO"}
+  ]
+}
