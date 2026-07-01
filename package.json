@@ -1,22 +1,24 @@
 {
   "name": "rtv-telegram-wallet",
-  "version": "0.1.0",
-  "description": "Open source Telegram wallet bot by RTV",
-  "main": "src/index.js",
+  "version": "3.0.0",
+  "description": "RotationTV Network — Sovereign Payment & Ecosystem Platform",
+  "private": true,
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "jest"
+    "dev": "wrangler dev",
+    "deploy:gateway": "wrangler deploy --config workers/rtv-edge-gateway/wrangler.jsonc",
+    "deploy:payments": "wrangler deploy --config workers/rtv-payments/wrangler.jsonc",
+    "deploy:blockchain": "wrangler deploy --config workers/rtv-blockchain/wrangler.jsonc",
+    "deploy:all": "npm run deploy:gateway && npm run deploy:payments && npm run deploy:blockchain",
+    "typecheck": "tsc --noEmit"
   },
-  "keywords": ["telegram", "wallet", "crypto", "bot", "open-source"],
-  "license": "MIT",
   "dependencies": {
-    "node-telegram-bot-api": "^0.64.0",
-    "ethers": "^6.0.0",
-    "dotenv": "^16.0.0"
+    "drizzle-orm": "^0.30.0",
+    "postgres": "^3.4.0",
+    "@supabase/supabase-js": "^2.40.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.0",
-    "jest": "^29.0.0"
+    "@cloudflare/workers-types": "^4.0.0",
+    "typescript": "^5.4.0",
+    "wrangler": "^3.60.0"
   }
 }
