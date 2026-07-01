@@ -1,0 +1,64 @@
+{
+  "companies": [
+    {
+      "id": "rotationtvnetwork",
+      "name": "RotationTV Network",
+      "domain": "rotationtvai.com",
+      "rtv_module": "command_center",
+      "avatar_style": "professional",
+      "primary_color": "#FF6B00",
+      "video_tone": "authoritative, warm, global",
+      "default_template": "rtv-command-center-intro"
+    },
+    {
+      "id": "rotationtvai",
+      "name": "RotationTVAI",
+      "domain": "rotationtvai.com",
+      "rtv_module": "ai_platform",
+      "avatar_style": "tech_forward",
+      "primary_color": "#0066FF",
+      "video_tone": "innovative, confident, futuristic",
+      "default_template": "rtv-ai-platform-intro"
+    },
+    {
+      "id": "rotationpay",
+      "name": "RotationPay",
+      "domain": "rotationtvai.com",
+      "rtv_module": "rotation_pay",
+      "avatar_style": "fintech_professional",
+      "primary_color": "#00CC88",
+      "video_tone": "trustworthy, fast, global",
+      "default_template": "rotationpay-update"
+    },
+    {
+      "id": "emergentlabs",
+      "name": "EmergentLabs",
+      "domain": "emergentlabs.ai",
+      "rtv_module": "emergent",
+      "avatar_style": "researcher",
+      "primary_color": "#8B5CF6",
+      "video_tone": "intelligent, precise, cutting-edge",
+      "default_template": "emergentlabs-intro"
+    },
+    {
+      "id": "bigoagency",
+      "name": "Bigo Agency LLC",
+      "domain": "bigo.agency",
+      "rtv_module": "bigo",
+      "avatar_style": "creative_agency",
+      "primary_color": "#F59E0B",
+      "video_tone": "creative, bold, results-driven",
+      "default_template": "bigo-agency-intro"
+    },
+    {
+      "id": "whiteindustries",
+      "name": "White Industries LLC",
+      "domain": "whiteindustries.com",
+      "rtv_module": "white_industries",
+      "avatar_style": "industrial_professional",
+      "primary_color": "#374151",
+      "video_tone": "solid, reliable, expert",
+      "default_template": "white-industries-intro"
+    }
+  ]
+}

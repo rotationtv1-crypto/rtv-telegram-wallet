@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "gift_id": {
+      "type": "string",
+      "description": "GiftItem ID this multiplier applies to (or 'all')"
+    },
+    "gift_name": {
+      "type": "string",
+      "description": "Gift name for reference"
+    },
+    "min_combo": {
+      "type": "number",
+      "description": "Minimum combo count to trigger this multiplier"
+    },
+    "max_combo": {
+      "type": "number",
+      "description": "Maximum combo count for this tier"
+    },
+    "multiplier": {
+      "type": "number",
+      "description": "Visual/points multiplier (e.g. 2.0 = 2x effect)"
+    },
+    "bonus_creator_rtv": {
+      "type": "number",
+      "description": "Extra RTV bonus to creator at this combo level"
+    },
+    "bonus_platform_rtv": {
+      "type": "number",
+      "description": "Extra RTV to platform at this combo level"
+    },
+    "effect_name": {
+      "type": "string",
+      "description": "Visual effect name (e.g. 'Fire Burst', 'Lightning Storm')"
+    },
+    "effect_color": {
+      "type": "string",
+      "description": "Hex color for the combo effect"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Is this combo multiplier active?"
+    }
+  },
+  "required": [
+    "min_combo",
+    "max_combo",
+    "multiplier",
+    "effect_name",
+    "is_active"
+  ],
+  "name": "ComboMultiplier"
+}

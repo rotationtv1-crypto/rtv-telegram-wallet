@@ -1,0 +1,77 @@
+{
+  "type": "object",
+  "properties": {
+    "leaderboard_type": {
+      "type": "string",
+      "enum": [
+        "top_earners_weekly",
+        "top_earners_monthly",
+        "top_earners_alltime",
+        "top_tippers",
+        "most_viewed",
+        "pk_champions",
+        "rising_stars",
+        "agency_rankings"
+      ],
+      "description": "Which leaderboard category"
+    },
+    "period": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly",
+        "alltime"
+      ],
+      "default": "weekly"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "avatar_url": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "number"
+          },
+          "value": {
+            "type": "number",
+            "description": "The metric value (earnings, tips, hours, etc.)"
+          },
+          "value_label": {
+            "type": "string",
+            "description": "Display label e.g. '$1,250.00' or '125K RTV' or '450 hours'"
+          }
+        }
+      },
+      "description": "Ranked entries (max 100)"
+    },
+    "total_entries": {
+      "type": "number",
+      "default": 0
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "leaderboard_type",
+    "period",
+    "entries"
+  ],
+  "name": "Leaderboard"
+}

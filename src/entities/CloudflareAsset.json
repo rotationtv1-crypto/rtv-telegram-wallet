@@ -1,0 +1,59 @@
+{
+  "type": "object",
+  "properties": {
+    "asset_name": {
+      "type": "string"
+    },
+    "asset_type": {
+      "type": "string",
+      "enum": [
+        "stream_video",
+        "r2_object",
+        "worker",
+        "page",
+        "kv_store"
+      ]
+    },
+    "cloudflare_id": {
+      "type": "string"
+    },
+    "cloudflare_url": {
+      "type": "string"
+    },
+    "rtv_module": {
+      "type": "string"
+    },
+    "company": {
+      "type": "string"
+    },
+    "size_bytes": {
+      "type": "number"
+    },
+    "duration_sec": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "processing",
+        "error",
+        "archived"
+      ]
+    },
+    "upload_date": {
+      "type": "string"
+    },
+    "playback_url": {
+      "type": "string"
+    },
+    "thumbnail_url": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [],
+  "name": "CloudflareAsset"
+}

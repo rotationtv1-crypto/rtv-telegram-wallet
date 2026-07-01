@@ -1,0 +1,72 @@
+{
+  "type": "object",
+  "properties": {
+    "phone_number": {
+      "type": "string",
+      "description": "E.164 formatted phone number"
+    },
+    "friendly_name": {
+      "type": "string",
+      "description": "Label for this number"
+    },
+    "provider": {
+      "type": "string",
+      "enum": [
+        "twilio",
+        "vonage",
+        "bandwidth",
+        "telnyx",
+        "sinch"
+      ],
+      "description": "VoIP provider"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "porting",
+        "released"
+      ],
+      "description": "Number status"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "voice, sms, mms, fax"
+    },
+    "rtv_module": {
+      "type": "string",
+      "description": "Which RTV company/module this belongs to"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "monthly_cost": {
+      "type": "number"
+    },
+    "provisioned_at": {
+      "type": "string"
+    },
+    "region": {
+      "type": "string"
+    },
+    "country_code": {
+      "type": "string"
+    },
+    "forwarding_enabled": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "phone_number",
+    "provider",
+    "status"
+  ],
+  "name": "VoIPNumber"
+}

@@ -1,0 +1,136 @@
+{
+  "type": "object",
+  "properties": {
+    "creator_id": {
+      "type": "string",
+      "description": "RTVUser ID of the creator"
+    },
+    "period_type": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly",
+        "lifetime"
+      ],
+      "description": "Earnings aggregation period"
+    },
+    "period_start": {
+      "type": "string",
+      "description": "ISO date for period start"
+    },
+    "period_end": {
+      "type": "string",
+      "description": "ISO date for period end"
+    },
+    "gross_tips_rtv": {
+      "type": "number",
+      "description": "Total RTV tips received before splits"
+    },
+    "gross_tips_usd": {
+      "type": "number",
+      "description": "Total USD value of tips before splits"
+    },
+    "creator_share_rtv": {
+      "type": "number",
+      "description": "80% creator share in RTV"
+    },
+    "creator_share_usd": {
+      "type": "number",
+      "description": "80% creator share in USD"
+    },
+    "platform_fee_rtv": {
+      "type": "number",
+      "description": "15% platform fee in RTV"
+    },
+    "platform_fee_usd": {
+      "type": "number",
+      "description": "15% platform fee in USD"
+    },
+    "agency_fee_rtv": {
+      "type": "number",
+      "description": "5% agency fee in RTV (0 if no agency)"
+    },
+    "agency_fee_usd": {
+      "type": "number",
+      "description": "5% agency fee in USD"
+    },
+    "agency_id": {
+      "type": "string",
+      "description": "AgencyRoster ID if creator belongs to agency"
+    },
+    "tip_count": {
+      "type": "number",
+      "description": "Number of tips received in period"
+    },
+    "unique_tippers": {
+      "type": "number",
+      "description": "Unique users who tipped"
+    },
+    "subscription_revenue_rtv": {
+      "type": "number",
+      "description": "RTV from subscription tiers"
+    },
+    "subscription_revenue_usd": {
+      "type": "number",
+      "description": "USD from subscription tiers"
+    },
+    "pk_winnings_rtv": {
+      "type": "number",
+      "description": "RTV won from PK battles"
+    },
+    "pk_winnings_usd": {
+      "type": "number",
+      "description": "USD won from PK battles"
+    },
+    "bonus_rtv": {
+      "type": "number",
+      "description": "Performance bonuses in RTV"
+    },
+    "bonus_usd": {
+      "type": "number",
+      "description": "Performance bonuses in USD"
+    },
+    "total_net_rtv": {
+      "type": "number",
+      "description": "Total net earnings in RTV after all fees"
+    },
+    "total_net_usd": {
+      "type": "number",
+      "description": "Total net earnings in USD after all fees"
+    },
+    "withdrawable_rtv": {
+      "type": "number",
+      "description": "RTV available for withdrawal"
+    },
+    "withdrawn_rtv": {
+      "type": "number",
+      "description": "RTV already withdrawn this period"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "accruing",
+        "finalized",
+        "paid",
+        "disputed"
+      ],
+      "description": "Earnings period status"
+    },
+    "finalized_at": {
+      "type": "string",
+      "description": "When period was finalized"
+    }
+  },
+  "required": [
+    "creator_id",
+    "period_type",
+    "period_start",
+    "gross_tips_rtv",
+    "creator_share_rtv",
+    "platform_fee_rtv",
+    "total_net_rtv",
+    "status"
+  ],
+  "name": "CreatorEarning"
+}

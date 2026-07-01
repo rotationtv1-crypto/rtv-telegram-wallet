@@ -1,0 +1,103 @@
+{
+  "type": "object",
+  "properties": {
+    "stream_id": {
+      "type": "string",
+      "description": "LiveStream ID"
+    },
+    "sender_id": {
+      "type": "string",
+      "description": "RTVUser ID of the tipper"
+    },
+    "receiver_id": {
+      "type": "string",
+      "description": "RTVUser ID of the creator receiving the tip"
+    },
+    "gift_id": {
+      "type": "string",
+      "description": "GiftItem ID (if tipped via gift)"
+    },
+    "gift_name": {
+      "type": "string"
+    },
+    "gift_emoji": {
+      "type": "string"
+    },
+    "amount_rtv": {
+      "type": "number",
+      "description": "RTV tokens tipped"
+    },
+    "amount_usd": {
+      "type": "number",
+      "description": "USD equivalent"
+    },
+    "creator_earn_rtv": {
+      "type": "number",
+      "description": "RTV credited to creator (after platform/agency cut)"
+    },
+    "creator_earn_usd": {
+      "type": "number"
+    },
+    "platform_fee_rtv": {
+      "type": "number"
+    },
+    "agency_fee_rtv": {
+      "type": "number"
+    },
+    "combo_count": {
+      "type": "number",
+      "default": 1,
+      "description": "Combo/streak count (Bigo-style: send 1 rose x100 = combo 100)"
+    },
+    "combo_bonus_rtv": {
+      "type": "number",
+      "default": 0,
+      "description": "Bonus RTV from combo multiplier"
+    },
+    "message": {
+      "type": "string",
+      "description": "Optional message attached to tip"
+    },
+    "is_anonymous": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Creator can pin top tips on stream"
+    },
+    "pk_battle_id": {
+      "type": "string",
+      "description": "If tip was during a PK battle, which battle"
+    },
+    "pk_side": {
+      "type": "string",
+      "enum": [
+        "challenger",
+        "opponent"
+      ],
+      "description": "Which side the tip supports in PK battle"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "reversed",
+        "failed"
+      ],
+      "default": "completed"
+    },
+    "created_at": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "stream_id",
+    "sender_id",
+    "receiver_id",
+    "amount_rtv",
+    "status"
+  ],
+  "name": "StreamTip"
+}

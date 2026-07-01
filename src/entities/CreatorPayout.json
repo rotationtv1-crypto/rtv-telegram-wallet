@@ -1,0 +1,102 @@
+{
+  "type": "object",
+  "properties": {
+    "creator_id": {
+      "type": "string",
+      "description": "RTVUser ID"
+    },
+    "agency_id": {
+      "type": "string"
+    },
+    "amount_usd": {
+      "type": "number",
+      "description": "Total withdrawal amount in USD"
+    },
+    "amount_rtv": {
+      "type": "number",
+      "description": "RTV tokens being cashed out"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "stripe",
+        "ton",
+        "paypal",
+        "internal",
+        "bank_transfer"
+      ],
+      "default": "stripe"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "stripe_transfer_id": {
+      "type": "string"
+    },
+    "ton_tx_hash": {
+      "type": "string"
+    },
+    "ton_address": {
+      "type": "string"
+    },
+    "fee_usd": {
+      "type": "number",
+      "default": 0,
+      "description": "Processing fee deducted"
+    },
+    "net_usd": {
+      "type": "number",
+      "description": "Amount after fees"
+    },
+    "agency_cut_usd": {
+      "type": "number",
+      "default": 0,
+      "description": "Agency commission deducted"
+    },
+    "creator_net_usd": {
+      "type": "number",
+      "description": "What the creator actually receives"
+    },
+    "period_start": {
+      "type": "string",
+      "description": "Earnings period start date"
+    },
+    "period_end": {
+      "type": "string"
+    },
+    "tx_count": {
+      "type": "number",
+      "description": "Number of tips/transactions in this payout period"
+    },
+    "requested_at": {
+      "type": "string"
+    },
+    "processed_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "creator_id",
+    "amount_usd",
+    "method",
+    "status"
+  ],
+  "name": "CreatorPayout"
+}
