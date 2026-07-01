@@ -1,0 +1,14 @@
+{
+  "name": "Rotation University — On-Chain Education",
+  "description": "Futuristic university with holographic halls and NFT diploma. The official Rotation University brand visual.",
+  "image": "https://media.base44.com/images/public/69db6144f66afe8317b2d0d7/e82a5fe9a_generated_image.png",
+  "external_url": "https://rotationtvai.com",
+  "attributes": [
+    {"trait_type": "Brand", "value": "Rotation University"},
+    {"trait_type": "Category", "value": "Brand Visual"},
+    {"trait_type": "Generation", "value": "AI Generated"},
+    {"trait_type": "Feature", "value": "NFT Diplomas"},
+    {"trait_type": "Rarity", "value": "Epic"},
+    {"trait_type": "Owner", "value": "Darrel — CEO"}
+  ]
+}
