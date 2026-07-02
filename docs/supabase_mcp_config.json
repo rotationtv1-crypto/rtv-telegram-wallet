@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=xynkgaxfwvpcixissxdz",
+      "scope": "project",
+      "transport": "http",
+      "read_only": false,
+      "feature_groups": {
+        "all_except_storage": true
+      }
+    }
+  },
+  "project_ref": "xynkgaxfwvpcixissxdz",
+  "org": "rotationtv1-crypto",
+  "project_name": "rotationtvai-ecosystem",
+  "instructions": "Add this MCP server to Claude Code: claude mcp add --scope project --transport http supabase 'https://mcp.supabase.com/mcp?project_ref=xynkgaxfwvpcixissxdz'"
+}
