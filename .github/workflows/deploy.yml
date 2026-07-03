@@ -1,0 +1,43 @@
+name: Deploy Workers
+
+# Reproducible deploy of the RTV Cloudflare Workers fleet.
+# Requires a GitHub Actions secret: CLOUDFLARE_API_TOKEN
+#   Scopes: Account > Workers Scripts:Edit, Account > Workers Durable Objects,
+#           and (only if custom routes are enabled) Zone > Workers Routes:Edit.
+# CLOUDFLARE_ACCOUNT_ID is already public (in deploy.sh); set as a repo variable
+# or leave the hardcoded default below.
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "workers/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || '7e431c541ea0f39d7f7fe5fd9f06eada' }}
+    strategy:
+      # Deploy sequentially; a shared account token means order doesn't matter,
+      # but fail-fast off lets every worker attempt so one failure is isolated.
+      fail-fast: false
+      matrix:
+        worker:
+          - rtv-edge-gateway
+          - rtv-payments
+          - rtv-blockchain
+          - rtv-stream
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy ${{ matrix.worker }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config workers/${{ matrix.worker }}/wrangler.jsonc

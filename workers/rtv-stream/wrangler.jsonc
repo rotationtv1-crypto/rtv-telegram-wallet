@@ -8,8 +8,20 @@
     "head_sampling_rate": 1
   },
   "vars": {
-    "RTV_VERSION": "3.0.0",
+    "RTV_VERSION": "4.1.0",
     "RTV_PARITY": "1 RTV = 0.01 USD"
   },
-  "workers_dev": true
+  "workers_dev": true,
+  // Persistent stream registry. SQLite-backed Durable Object (new_sqlite_classes)
+  // so it runs without the classic-DO paid requirement.
+  "durable_objects": {
+    "bindings": [
+      { "name": "STREAM_REGISTRY", "class_name": "StreamRegistry" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["StreamRegistry"] }
+  ]
+  // Optional custom domain (needs a token with Zone > Workers Routes):
+  // "routes": [{ "pattern": "stream.<your-domain>/*", "zone_name": "<your-domain>" }]
 }

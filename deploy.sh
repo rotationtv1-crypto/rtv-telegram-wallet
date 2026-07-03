@@ -34,9 +34,19 @@ npx wrangler deploy --config workers/rtv-blockchain/wrangler.jsonc 2>&1
 echo "✅ Blockchain deployed"
 echo ""
 
+# Deploy Stream (was live but missing from this pipeline — source now canonical)
+echo "📦 Deploying rtv-stream..."
+npx wrangler deploy --config workers/rtv-stream/wrangler.jsonc 2>&1
+echo "✅ Stream deployed"
+echo ""
+
+# NOTE: rtv-bot-console is live on Cloudflare but has NO source in this repo.
+# It is deployed from a separate repo and is intentionally NOT handled here.
+
 echo "🎉 All workers deployed!"
 echo ""
 echo "Endpoints:"
 echo "  Edge Gateway:  https://rtv-edge-gateway.rotationtvaicom.workers.dev"
 echo "  Payments:      https://rtv-payments.rotationtvaicom.workers.dev"
 echo "  Blockchain:    https://rtv-blockchain.rotationtvaicom.workers.dev"
+echo "  Stream:        https://rtv-stream.rotationtvaicom.workers.dev"

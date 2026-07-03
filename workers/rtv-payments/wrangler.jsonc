@@ -5,4 +5,6 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true, "head_sampling_rate": 1 },
   "vars": { "RTV_VERSION": "3.0.0", "RTV_PARITY": "1 RTV = 0.01 USD" }
+  // Optional custom domain (needs a CF token with Zone > Workers Routes):
+  // "routes": [{ "pattern": "pay.<your-domain>/*", "zone_name": "<your-domain>" }]
 }

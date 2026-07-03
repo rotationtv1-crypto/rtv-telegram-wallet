@@ -12,4 +12,8 @@
     "RTV_VERSION": "3.0.0",
     "RTV_ENV": "production"
   }
+  // Optional custom domain (needs a CF token with Zone > Workers Routes):
+  // "routes": [{ "pattern": "api.<your-domain>/*", "zone_name": "<your-domain>" }]
+  // Secrets (set via `wrangler secret put`, never committed):
+  //   SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN, ANTHROPIC_API_KEY, GEMINI_API_KEY
 }

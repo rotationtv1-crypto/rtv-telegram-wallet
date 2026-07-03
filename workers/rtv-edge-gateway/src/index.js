@@ -96,9 +96,51 @@ async function handleAuth(request, env, path, cors) {
   return json({ error: 'Auth endpoint not found' }, cors, 404);
 }
 
+// Supabase is called via its REST (PostgREST) endpoint with the service-role
+// key, kept as a Worker secret (never committed). Direct fetch keeps this
+// plain-JS worker dependency-free (no @supabase/supabase-js bundle / realtime
+// baggage). Set SUPABASE_URL + SUPABASE_SERVICE_KEY via `wrangler secret put`.
+function supabaseReady(env) {
+  return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY);
+}
+function supabaseHeaders(env) {
+  return {
+    apikey: env.SUPABASE_SERVICE_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+}
+
 async function handleUsers(request, env, path, cors) {
   const sub = path.replace('/api/users/', '');
-  if (sub === 'list') return json({ total: 0, message: 'Requires SUPABASE_SERVICE_KEY' }, cors);
-  if (sub === 'onboard') { const b = await request.json(); return json({ telegram_id: b.telegram_id, welcome_bonus: 100, currency: 'RTV', parity: '1 RTV = $0.01', status: 'pending_db' }, cors); }
+  if (!supabaseReady(env)) {
+    return json({ error: 'Supabase not configured', hint: 'Set SUPABASE_URL and SUPABASE_SERVICE_KEY worker secrets' }, cors, 503);
+  }
+  const table = env.SUPABASE_USERS_TABLE || 'rtv_users';
+  const base = `${env.SUPABASE_URL}/rest/v1/${table}`;
+
+  if (sub === 'list') {
+    const r = await fetch(`${base}?select=*&limit=100`, { headers: { ...supabaseHeaders(env), Prefer: 'count=exact' } });
+    if (!r.ok) return json({ error: 'Supabase query failed', status: r.status, detail: await r.text() }, cors, 502);
+    const users = await r.json();
+    const range = r.headers.get('content-range') || '';
+    const total = range.includes('/') ? Number(range.split('/')[1]) : users.length;
+    return json({ total, users }, cors);
+  }
+
+  if (sub === 'onboard') {
+    const b = await request.json();
+    if (!b.telegram_id) return json({ error: 'telegram_id required' }, cors, 400);
+    const record = { telegram_id: b.telegram_id, rtv_balance: 100, username: b.username ?? null, created_at: new Date().toISOString() };
+    const r = await fetch(`${base}?on_conflict=telegram_id`, {
+      method: 'POST',
+      headers: { ...supabaseHeaders(env), Prefer: 'resolution=merge-duplicates,return=representation' },
+      body: JSON.stringify(record),
+    });
+    if (!r.ok) return json({ error: 'Supabase upsert failed', status: r.status, detail: await r.text() }, cors, 502);
+    const rows = await r.json();
+    return json({ success: true, user: rows[0] ?? record, welcome_bonus: 100, currency: 'RTV', parity: '1 RTV = $0.01' }, cors);
+  }
+
   return json({ error: 'User endpoint not found' }, cors, 404);
 }

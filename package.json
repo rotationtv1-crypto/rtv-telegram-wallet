@@ -8,7 +8,8 @@
     "deploy:gateway": "wrangler deploy --config workers/rtv-edge-gateway/wrangler.jsonc",
     "deploy:payments": "wrangler deploy --config workers/rtv-payments/wrangler.jsonc",
     "deploy:blockchain": "wrangler deploy --config workers/rtv-blockchain/wrangler.jsonc",
-    "deploy:all": "npm run deploy:gateway && npm run deploy:payments && npm run deploy:blockchain",
+    "deploy:stream": "wrangler deploy --config workers/rtv-stream/wrangler.jsonc",
+    "deploy:all": "npm run deploy:gateway && npm run deploy:payments && npm run deploy:blockchain && npm run deploy:stream",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

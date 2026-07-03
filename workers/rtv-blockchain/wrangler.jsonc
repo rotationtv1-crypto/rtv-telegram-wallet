@@ -5,4 +5,6 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true, "head_sampling_rate": 1 },
   "vars": { "RTV_VERSION": "3.0.0" }
+  // Optional custom domain (needs a CF token with Zone > Workers Routes):
+  // "routes": [{ "pattern": "chain.<your-domain>/*", "zone_name": "<your-domain>" }]
 }
