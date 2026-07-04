@@ -1,4 +1,5 @@
 # CLAUDE_TASKS.md — Manual Tasks for Claude
+# Updated: 2026-07-04 v2 — includes Rotation Erotica security fixes
 
 > These tasks require browser auth, interactive dashboards, or manual CLI work.
 > Mira built the code. Claude fetches the auth.
@@ -24,12 +25,19 @@
      - Zone:Workers Routes:Edit
 5. Bind secrets via CLI (never in chat):
    ```bash
-   cd workers/venice-ai-router
-   npx wrangler login
-   npx wrangler secret put VENICE_API_KEY
+   # Venice AI Worker
+   cd workers && npx wrangler secret put VENICE_API_KEY
    npx wrangler secret put TELEGRAM_BOT_TOKEN
    npx wrangler secret put SUPABASE_URL
    npx wrangler secret put SUPABASE_SERVICE_KEY
+
+   # Edge Gateway (Rotation Erotica)
+   cd rtv-edge-gateway && npx wrangler secret put SUPABASE_URL
+   npx wrangler secret put SUPABASE_ANON_KEY
+   npx wrangler secret put SUPABASE_SERVICE_KEY
+   npx wrangler secret put CF_ACCOUNT_ID
+   npx wrangler secret put CF_STREAM_TOKEN
+   npx wrangler secret put CF_STREAM_SIGNING_KEY
    ```
 6. Update `.env` from template: `cp .env.rotationtv.example .env.rotationtv`
 
@@ -38,35 +46,66 @@
 
 ---
 
-## 🟡 TASK 2: SUPABASE DATABASE SETUP
+## 🔴 TASK 2: APPLY SECURITY HARDENING TO ROTATION EROTICA (CRITICAL)
+
+**Why:** `transfer_rtv` has no caller-identity check — any authenticated user can drain any other user's balance. `gift_transactions` allows free gift fabrication. `live_rooms` allows stream key overwrite.
+
+### Steps:
+1. Go to https://supabase.com/dashboard
+2. Select project **zzybjoowhkwuomnpixuy** (Rotation Erotica)
+3. Open SQL Editor
+4. Run the migration from:
+   `supabase/migrations-rotation-erotica/20260704_security_hardening.sql`
+5. Verify fixes:
+   ```sql
+   -- transfer_rtv should reject non-service calls
+   SELECT proacl FROM pg_proc WHERE proname = 'transfer_rtv';
+   -- Should show only postgres/service_role
+
+   -- gift_transactions INSERT policy should be gone
+   SELECT polname FROM pg_policy WHERE polrelid = 'gift_transactions'::regclass;
+   -- Should NOT contain "Authenticated users send gifts"
+
+   -- Trigger should exist on live_rooms
+   SELECT tgname FROM pg_trigger WHERE tgrelid = 'live_rooms'::regclass;
+   -- Should contain "trg_protect_live_rooms_stream_columns"
+   ```
+6. Manual test: attempt `POST /rest/v1/rpc/transfer_rtv` with anon key as non-owner → must fail
+
+**Time:** 15 min
+**Status:** 🔴 NOT STARTED
+
+---
+
+## 🟡 TASK 3: SUPABASE DATABASE SETUP (RTV Ecosystem)
 
 **Why:** Consolidated schema needs to be applied to the live Supabase instance.
 
 ### Steps:
-1. Go to https://supabase.com/dashboard → select RTV project
+1. Go to https://supabase.com/dashboard → select RTV project (xynkgaxfwvpcixissxdz)
 2. Open SQL Editor
-3. Run `supabase/migrations/00000_consolidated_schema.sql` (the single consolidated file)
-4. Verify all 18 tables created:
-   - RtvUser, CreatorProfile, LiveStream, VodLibrary
-   - CatalogChannel, CatalogVod, FilmCollection
-   - SubscriptionPlan, UserSubscription
-   - TributeTier, TributeTransaction, TransferGift
-   - FilmGeneration, AiCronConfig
-   - OmegaAuditLog, AgencyRoster, CreatorPayout, AcademyCredit
-5. Verify RLS is enabled on all tables
-6. Verify seed data inserted (channels, plans, tribute tiers)
-7. Create Supabase Storage buckets:
+3. Run `supabase/migrations/00000_consolidated_schema.sql`
+4. Run `supabase/migrations/20260704_oauth_telegram_auth.sql`
+5. Verify all 21 tables created (18 core + 3 auth)
+6. Verify RLS enabled on all tables
+7. Verify seed data (12 channels, 5 plans, 8 tribute tiers)
+8. Create Supabase Storage buckets:
    - `film-assets` (public)
    - `stream-thumbnails` (public)
    - `avatars` (public)
-8. Test: `SELECT * FROM public."CatalogChannel";` should return 12 rows
+9. Enable Supabase Auth providers:
+   - Telegram (via custom auth bridge)
+   - Google OAuth
+   - GitHub OAuth
+   - Discord OAuth
+10. Test: `SELECT * FROM public."CatalogChannel";` → 12 rows
 
-**Time:** 20 min
+**Time:** 25 min
 **Status:** 🟡 NOT STARTED
 
 ---
 
-## 🟡 TASK 3: TELEGRAM BOT CONFIGURATION
+## 🟡 TASK 4: TELEGRAM BOT CONFIGURATION
 
 **Why:** Bots need commands, descriptions, and profile pictures.
 
@@ -91,7 +130,7 @@
    - `/setuserpic` → Upload RTV logo
 3. Set webhook:
    ```bash
-   curl -s "https://api.telegram.org/bot<NEW_TOKEN>/setWebhook?url=https://rotationtv-venice-ai.<ACCOUNT>.workers.dev"
+   curl -s "https://api.telegram.org/bot<NEW_TOKEN>/setWebhook?url=https://rotationtv-venice-ai.<ACCOUNT>.workers.dev/telegram/webhook"
    ```
 
 **Time:** 15 min
@@ -99,32 +138,81 @@
 
 ---
 
-## 🟡 TASK 4: CLOUDFLARE WORKERS DEPLOY
+## 🟡 TASK 5: CLOUDFLARE WORKERS DEPLOY
 
-**Why:** Venice AI router and edge gateway need to be deployed.
+**Why:** Venice AI router + edge gateway need to be deployed.
 
 ### Steps:
-1. `cd workers/venice-ai-router`
-2. `npm install`
-3. `npx wrangler login`
-4. Bind secrets (from Task 1):
+1. Deploy Venice AI Worker:
    ```bash
+   cd workers
+   npm install
+   npx wrangler login
    npx wrangler secret put VENICE_API_KEY
    npx wrangler secret put TELEGRAM_BOT_TOKEN
    npx wrangler secret put SUPABASE_URL
    npx wrangler secret put SUPABASE_SERVICE_KEY
+   npx wrangler deploy
    ```
-5. `npx wrangler deploy`
-6. Note the deployed URL (e.g., `https://rotationtv-venice-ai.<account>.workers.dev`)
-7. Test: `curl https://rotationtv-venice-ai.<account>.workers.dev/` should return "alive"
-8. Deploy rtvEdgeGateway worker similarly
+2. Deploy Edge Gateway:
+   ```bash
+   cd rtv-edge-gateway
+   npm install
+   npx wrangler secret put SUPABASE_URL
+   npx wrangler secret put SUPABASE_ANON_KEY
+   npx wrangler secret put SUPABASE_SERVICE_KEY
+   npx wrangler secret put CF_ACCOUNT_ID
+   npx wrangler secret put CF_STREAM_TOKEN
+   npx wrangler secret put CF_STREAM_SIGNING_KEY
+   npx wrangler deploy
+   ```
+3. Create KV namespace for rate limiting:
+   ```bash
+   npx wrangler kv:namespace create RATE_LIMIT_KV
+   # Update wrangler.toml with the returned ID
+   ```
+4. Test both workers:
+   ```bash
+   curl https://rotationtv-venice-ai.<ACCOUNT>.workers.dev/
+   curl https://rtv-edge-gateway.<ACCOUNT>.workers.dev/
+   ```
 
-**Time:** 15 min
+**Time:** 20 min
 **Status:** 🟡 NOT STARTED
 
 ---
 
-## 🟢 TASK 5: DOMAIN & DNS
+## 🟡 TASK 6: COMPOSIO INTEGRATION SETUP
+
+**Why:** Composio connects 200+ apps for automation — GitHub, Gmail, Slack, Notion, Google Calendar, etc.
+
+### Steps:
+1. Connect core services via Mira:
+   - GitHub: already connected ✅
+   - Supabase: already connected ✅
+   - Vercel: already connected ✅
+   - ElevenLabs: already connected ✅
+   - HeyGen: already connected ✅
+2. Reconnect expired services:
+   - Google Docs (expired)
+   - Google Drive (expired)
+   - Google Sheets (expired)
+   - Google Calendar (expired)
+   - Gmail (expired)
+   - Brevo (expired)
+   - Canva (expired)
+3. Set up event triggers:
+   - GitHub: new PR → notify in Telegram
+   - Gmail: new email from Stripe → log to Supabase
+   - Google Calendar: new event → remind in Telegram
+4. Test automation: create a GitHub issue → verify notification arrives
+
+**Time:** 20 min
+**Status:** 🟡 NOT STARTED
+
+---
+
+## 🟢 TASK 7: DOMAIN & DNS
 
 **Why:** Custom domain for the platform.
 
@@ -132,67 +220,44 @@
 1. In Cloudflare dashboard → Add domain (e.g., `rotationtv.app`)
 2. Update nameservers at registrar
 3. Wait for DNS propagation
-4. Add custom domain to Workers:
-   ```bash
-   npx wrangler domains add rotationtv.app
-   ```
-5. Enable SSL (Cloudflare does this automatically)
+4. Add custom domain to Workers
+5. Enable SSL (automatic via Cloudflare)
 
 **Time:** 10 min
 **Status:** 🟢 NOT STARTED
 
 ---
 
-## 🟢 TASK 6: END-TO-END TESTING
+## 🟢 TASK 8: END-TO-END TESTING
 
 **Why:** Verify the full pipeline works.
 
 ### Steps:
-1. Send `/ai hello` to @Rotationtv_Bot → should get Venice AI response
-2. Send `/image a sunset over mountains` → should get generated image
-3. Send `/voice Hello from RotationTV` → should get voice message
-4. Check Supabase `OmegaAuditLog` → should have AI request entries
-5. Test film generation:
+1. Send `/ai hello` to @Rotationtv_Bot → Venice AI response
+2. Send `/image a sunset over mountains` → generated image
+3. Send `/voice Hello from RotationTV` → voice message
+4. Test film generation:
    ```bash
    curl -X POST https://<PROJECT>.supabase.co/functions/v1/film-generator      -H "Authorization: Bearer <CRON_SECRET>"      -H "Content-Type: application/json"      -d '{"film_id": null}'
    ```
-6. Test catalog browsing in Mini App
-7. Test tribute flow: send 10 RTV to a creator
-8. Test subscription: subscribe to Basic plan
+5. Test catalog browsing in Mini App
+6. Test tribute flow: send 10 RTV to a creator
+7. Test subscription: subscribe to Basic plan
+8. Test edge gateway: create stream → verify CF Stream live input
+9. Test gift send: send gift → verify transfer_rtv called → verify gift_transactions row
+10. Test stream webhook: verify status transitions (offline → live → offline)
 
-**Time:** 20 min
+**Time:** 25 min
 **Status:** 🟢 NOT STARTED
 
 ---
 
-## 🟢 TASK 7: MONITORING & ALERTS
-
-**Why:** Know when things break.
-
-### Steps:
-1. In Cloudflare dashboard → Workers → rotationtv-venice-ai → Metrics
-2. Enable email alerts for error rate > 5%
-3. In Supabase dashboard → Database → Logs
-4. Set up pg_cron for health checks:
-   ```sql
-   SELECT cron.schedule('health-check', '*/5 * * * *', $$
-     INSERT INTO public."OmegaAuditLog" (actor_id, action_type, resource_type, metadata)
-     VALUES ('system', 'health_check', 'platform', '{"status":"alive"}'::jsonb);
-   $$);
-   ```
-5. Create Telegram alert channel for errors
-
-**Time:** 15 min
-**Status:** 🟢 NOT STARTED
-
----
-
-## 🟢 TASK 8: CLEAN UP OLD MIGRATIONS
+## 🟢 TASK 9: CLEAN UP OLD MIGRATIONS
 
 **Why:** 10 scattered migration files have duplicate table definitions. The consolidated schema replaces them all.
 
 ### Steps:
-1. In Supabase SQL Editor, verify consolidated schema is applied
+1. Verify consolidated schema is applied (Task 3)
 2. Delete old migration files from repo:
    - `20260703_full_schema.sql`
    - `20260703_rtv_content_feed.sql`
@@ -203,8 +268,9 @@
    - `20260704_film_catalog_tribute.sql`
    - `20260704_full_schema_v2.sql`
    - `20260704_hours_dashboard_views.sql`
-3. Keep only: `00000_consolidated_schema.sql`
-4. Update README to reference the single migration
+3. Keep only: `00000_consolidated_schema.sql` + `20260704_oauth_telegram_auth.sql`
+4. Also delete obsolete: `20260625000002_edge_gateway_streaming.sql` (targeted wrong project)
+5. Update README to reference the clean migration set
 
 **Time:** 10 min
 **Status:** 🟢 NOT STARTED
@@ -216,14 +282,16 @@
 | # | Task | Priority | Time | Status |
 |---|------|----------|------|--------|
 | 1 | Secret Rotation | 🔴 CRITICAL | 30m | NOT STARTED |
-| 2 | Supabase Database | 🟡 HIGH | 20m | NOT STARTED |
-| 3 | Telegram Bot Config | 🟡 HIGH | 15m | NOT STARTED |
-| 4 | Cloudflare Workers | 🟡 HIGH | 15m | NOT STARTED |
-| 5 | Domain & DNS | 🟢 NORMAL | 10m | NOT STARTED |
-| 6 | End-to-End Testing | 🟢 NORMAL | 20m | NOT STARTED |
-| 7 | Monitoring & Alerts | 🟢 NORMAL | 15m | NOT STARTED |
-| 8 | Clean Up Migrations | 🟢 NORMAL | 10m | NOT STARTED |
+| 2 | Security Hardening (Rotation Erotica) | 🔴 CRITICAL | 15m | NOT STARTED |
+| 3 | Supabase Database (RTV Ecosystem) | 🟡 HIGH | 25m | NOT STARTED |
+| 4 | Telegram Bot Config | 🟡 HIGH | 15m | NOT STARTED |
+| 5 | Cloudflare Workers Deploy | 🟡 HIGH | 20m | NOT STARTED |
+| 6 | Composio Integration Setup | 🟡 HIGH | 20m | NOT STARTED |
+| 7 | Domain & DNS | 🟢 NORMAL | 10m | NOT STARTED |
+| 8 | End-to-End Testing | 🟢 NORMAL | 25m | NOT STARTED |
+| 9 | Clean Up Old Migrations | 🟢 NORMAL | 10m | NOT STARTED |
 
-**Total estimated time: ~2.5 hours**
+**Total estimated time: ~3 hours**
 
-> ⚠️ Task 1 (Secret Rotation) MUST be done first. All exposed tokens are compromised.
+> ⚠️ Tasks 1 and 2 are CRITICAL. Do them first.
+> Task 2 (security hardening) is independent of Task 1 — can be done in parallel.
