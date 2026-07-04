@@ -2,19 +2,17 @@ name = "rtv-edge-gateway"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
-# Auth: Supabase session (not raw Telegram initData)
-# Routes: stream create/end/play/list, gift send, stream webhook
-
 [vars]
 ENVIRONMENT = "production"
 
 # Secrets (set via: npx wrangler secret put <KEY>)
-# SUPABASE_URL          — zzybjoowhkwuomnpixuy project URL
-# SUPABASE_ANON_KEY     — for /auth/v1/user verification
-# SUPABASE_SERVICE_KEY  — for service-role DB writes + RPC
-# CF_ACCOUNT_ID         — Cloudflare account ID
-# CF_STREAM_TOKEN       — Cloudflare Stream API token
-# CF_STREAM_SIGNING_KEY — Stream webhook HMAC key
+# SUPABASE_URL
+# SUPABASE_ANON_KEY
+# SUPABASE_SERVICE_KEY
+# CF_STREAM_API_TOKEN
+# CF_ACCOUNT_ID
+# CF_STREAM_SIGNING_KEY
+# WEBHOOK_SECRET
 
 [[kv_namespaces]]
 binding = "RATE_LIMIT_KV"
