@@ -1,426 +1,455 @@
-# RTV FULL ECOSYSTEM LAUNCH PLAYBOOK v4.0
-## Deep Research Knowledge Logic Guide
-### July 2, 2026 | Presidential Authority: Darrel — Owner & CEO
-### "Learn it. Live it. Love it. — We keep business rotating globally."
+# RotationTV Network — Full Launch Playbook v4
+## "First TV on Telegram" — Tubi-Scale Persistent Feed + Live Streaming + AI Content
+
+**Version:** 4.0 — Honest Constraints Edition
+**Date:** July 3, 2026
+**Authority:** Darrel Spell, Owner & CEO
+**Status:** Real build plan with actual constraints, not aspirational fiction
 
 ---
 
-## TABLE OF CONTENTS
-1. Executive Summary — Real Constraints
-2. Architecture Stack — What's Hosted Where
-3. Repo Audit — What's Real vs Empty
-4. Frontend Verification — All 6 Checks
-5. Bot Ecosystem — 3 Bots Fully Wired
-6. Telegram Payments 2.0 — Test Store
-7. Security Checklist
-8. WebRTC Streaming — Bigo/Tango Architecture
-9. Backend Functions — 35 Live Functions
-10. Entity Schemas — 24 Data Models
-11. Cloudflare Workers — 4 Edge Nodes
-12. Launch Sequence — 3-Minute Deploy
+## THE HONEST TRUTH — What's Real, What's Failing, What's Needed
+
+### What's ACTUALLY LIVE right now:
+
+| Component | Status | Where It's Hosted |
+|-----------|--------|-------------------|
+| 3 Telegram Bots | ✅ LIVE | @RotationLivestram_bot, @ROTATIONEROTICA_BOT, @base44_229784_bot |
+| 4 Cloudflare Workers | ✅ LIVE | rtv-edge-gateway, rtv-payments, rtv-blockchain, rtv-stream (.rotationtvaicom.workers.dev) |
+| rtv-bot-console Worker | ✅ LIVE | HTML console at rtv-bot-console.rotationtvaicom.workers.dev |
+| Cloudflare Pages SPA | ✅ LIVE | rtv-frontend.pages.dev (19 React pages) |
+| Supabase Database | ✅ LIVE | 92 tables, xynkgaxfwvpcixissxdz.supabase.co |
+| Venice AI | ✅ LIVE | 89 models, video generation at $0.95/5s |
+| Sovereign Payments | ✅ LIVE | Telegram Stars + TON/RTVS |
+| Base44 Entities | ✅ LIVE | 25 entity schemas, 35 edge functions |
+| GitHub Repos | ✅ LIVE | 24 repos under rotationtv1-crypto |
+| TON Blockchain | ✅ LIVE | Chainstack v2+v3 endpoints |
+
+### What's FAILING (the real constraints):
+
+| Blocker | Why It Fails | Impact |
+|---------|-------------|--------|
+| Cloudflare Stream:Edit token | 3 token attempts, all zero permissions | Can't create Live Inputs for WebRTC streaming |
+| No persistent VOD feed | Only live streaming code exists, no content discovery | Can't be "Tubi on Telegram" without a content library |
+| No AI content pipeline | Venice AI can generate video but no automation to create/store/serve content | AI-hosted channels don't exist yet |
+| HeyGen pipeline stalled | Stuck since April 24, webhook callbacks failing | 9 marketing videos expired |
+| No Roku app | Direct Publisher sunset Jan 2024, need full SceneGraph SDK | Can't be on TV without building a BrightScript app |
+| Supabase anon key 401 | Both sb_publishable_ and eyJ anon JWT fail on REST | Client-side Supabase calls don't work (server-side does) |
+| Telegram channel missing | @RotationtvNetworkECOSYSTEM not created by Darrel | Marketing CTAs point to dead destination |
+
+### What's NOT real (despite what other AIs claimed):
+- ❌ "6 bots" — we have 3
+- ❌ "31 repos" — we have 24
+- ❌ "72 tables" — we have 92
+- ❌ "Stripe + PayPal" — PURGED, sovereign only
+- ❌ "Phase 1 COMPLETE" — streaming not operational
+- ❌ "Fortune 500 quality" — we're pre-launch with real blockers
 
 ---
 
-## 1. EXECUTIVE SUMMARY — REAL CONSTRAINTS
+## THE VISION — What We're Building
 
-### The Truth (No "Trust Me Bro")
+RotationTV Network will be the **first television platform native to Telegram**.
 
-**Stack:**
-- Frontend: React SPA → Cloudflare Pages (rtv-frontend.pages.dev)
-- Edge Compute: Cloudflare Workers (4 workers on rotationtvaicom.workers.dev)
-- Backend: Base44 serverless functions (35 functions deployed)
-- Database: Base44 entity schemas (24 tables) + Supabase Postgres (backup)
-- Blockchain: Solana (4 Chainstack nodes) + TON (Chainstack v3)
-- Streaming: Cloudflare Stream WebRTC (WHIP/WHEP) — NOT RTMP
-- Payments: Telegram Stars (XTR) + TON Jetton + Internal RTV — sovereign only
-- Bots: 3 Telegram bots (Live, Erotica, Base44 agent)
+Not just live streaming (Bigo/Tango). Not just VOD (Tubi/Hulu). Both.
 
-**What's Hosted Where:**
-| Component | Host | URL | Status |
-|-----------|------|-----|--------|
-| Frontend SPA | Cloudflare Pages | rtv-frontend.pages.dev | ✅ LIVE |
-| Stream API | Cloudflare Worker | rtv-stream.rotationtvaicom.workers.dev | ✅ LIVE v4.0 |
-| Payment API | Cloudflare Worker | rtv-payments.rotationtvaicom.workers.dev | ✅ LIVE |
-| Edge Gateway | Cloudflare Worker | rtv-edge-gateway.rotationtvaicom.workers.dev | ✅ LIVE |
-| Blockchain API | Cloudflare Worker | rtv-blockchain.rotationtvaicom.workers.dev | ✅ LIVE |
-| Backend Functions | Base44 | app.base44.com/api/functions/* | ✅ 35 LIVE |
-| Bot 1 | Base44 function | @RotationLivestram_bot | ✅ LIVE |
-| Bot 2 | Base44 function | @ROTATIONEROTICA_BOT | ✅ LIVE |
-| Bot 3 | Base44 webhook | @base44_229784_bot | ✅ LIVE |
+### The 3-Layer Content Model:
 
-**What's Failing:**
-1. ❌ Cloudflare Stream API — Worker can't create real live inputs (API token lacks Stream:Edit permission)
-2. ❌ Custom domain routes — API token lacks Zone Workers Routes:Edit
-3. ❌ BASE44_SERVICE_ROLE_KEY — not set, blocks entity writes from Workers
-4. ❌ Venice AI — $0 credits, gateway dormant
-5. ⚠️ nextjs-boilerplate repo — empty (0 files on main/master)
-
----
-
-## 2. REPO AUDIT RESULTS
-
-### Real Codebases (5 repos with actual code)
-| Repo | Files | Language | Status |
-|------|-------|----------|--------|
-| rtv-telegram-wallet | 187 | TypeScript | ✅ Main monorepo |
-| rotation-call-center | 233 | JavaScript | ✅ Full codebase |
-| chatbot | 228 | TypeScript | ✅ Full codebase |
-| rtv-telegram-onboarding-bot | 35 | TypeScript | ✅ Active |
-| telegram-kimi-bridge | 25 | Python | ✅ Active |
-
-### Empty/Minimal Repos (4 repos)
-| Repo | Files | Status |
-|------|-------|--------|
-| nextjs-boilerplate | 0 | ❌ EMPTY (8MB but no files on main) |
-| RotationCallCenter- | 1 | ❌ Empty scaffold |
-| Chatbot-support- | 1 | ❌ Empty scaffold |
-| base44-agent-config | 3 | ⚠️ Minimal config only |
-
-### Forked Repos (8 repos — reference code)
-supabase, supabase-mcp, supabase-js, wallet-adapter, ton-assets, ton-api-monitoring-stats, ui, dev-portal, fvm-mainnet-docker, stuntbanana
-
-### Other Org Repos (2 repos)
-Rotationtvnetwork/Rotation-Call-center- (475KB, JavaScript)
-Rotationtvnetwork/rotationtv-telegram-OnBoarding-bot (31KB, TypeScript)
-
----
-
-## 3. FRONTEND VERIFICATION — ALL 6 CHECKS
-
-### 1. Build & Compile Check ✅
-- Tool: Vite + React
-- Result: 0 errors, 22 files generated
-- Bundle sizes: CSS 0.76KB, main JS 3-5KB per chunk
-- Output: dist/ folder generated successfully
-
-### 2. API Integration Test ✅
-- /health → 200 (v4.0.0, WebRTC)
-- /api/stream/create → 200 (returns WHIP + WHEP URLs)
-- /api/stream/list → 200 (returns active streams)
-- /api/gifts → 200 (6 gift tiers)
-- /api/subscriptions/tiers → 200 (4 tiers)
-- /api/balance → 200 (RTV balance)
-- /api/tip/send → 200 (tip processed, 80/15/5 split)
-
-### 3. State Management Review ✅
-- User state: useState + localStorage (telegram_id persisted)
-- Stream state: idle → connecting → live → ended (no stale states)
-- Balance: updated after tip/buy, no race conditions
-- Watch state: cleared on navigation, refs cleaned up
-- Error state: shown then cleared on next action
-- Toast: auto-clears after 3s
-
-### 4. UI/UX Flow Test ✅
-- Onboarding: Telegram initData → user identified → home screen
-- Go Live: tap button → camera permission → local preview → LIVE indicator → End button
-- Watch: tap stream → WHEP player → video plays
-- Gift: tap gift → API call → balance updates → toast notification
-- Buy: select Stars → invoice link → pay → balance updates
-- Navigation: 4-tab bottom nav (Home/Live/Gifts/Wallet)
-
-### 5. Mobile Responsiveness ✅
-- Viewport: width=device-width, maximum-scale=1.0
-- Bottom nav: fixed, flex space-around
-- Cards: CSS grid 1fr 1fr (responsive)
-- Video: width 100%, mirror transform
-- Text: 10-42px range (readable)
-- Touch targets: min 44px
-- No horizontal scroll
-
-### 6. Auth & Session ✅
-- Telegram initData from window.Telegram.WebApp.initDataUnsafe
-- Session: telegram_id in localStorage
-- Fallback: URL hash params for testing
-- HMAC-SHA256 verification specified for production
-
----
-
-## 4. BOT ECOSYSTEM — 3 BOTS FULLY WIRED
-
-### Bot 1: @RotationLivestram_bot (Main Streaming)
-- Token: TELEGRAM_BOT_TOKEN_15
-- Function: rtvLiveBot (v4.0)
-- Webhook: app.base44.com/api/functions/rtvLiveBot
-- Commands: 13 (including /testgoods for Payments 2.0)
-- Mini App: "Open RTV Live" → rtv-frontend.pages.dev
-- Streaming: WebRTC (WHIP/WHEP) — NO RTMP
-- Payments: Telegram Stars (XTR), sovereign
-- Test Store: 5 imaginary goods (unicorn horn, dragon egg, time machine, phoenix feather, galaxy brain)
-
-### Bot 2: @ROTATIONEROTICA_BOT (18+ Platform)
-- Token: TELEGRAM_BOT_TOKEN_16 (rotated — old token revoked)
-- Function: rtvEroticaBot (v4.0)
-- Webhook: app.base44.com/api/functions/rtvEroticaBot
-- Commands: 13 (including /testgoods)
-- Mini App: "Open RTV 18+" → rtv-frontend.pages.dev
-- Payments: Stars ONLY (no Stripe — compliance)
-- Test Store: 4 imaginary goods
-
-### Bot 3: @base44_229784_bot (Agent)
-- Token: TELEGRAM_BOT_TOKEN_11
-- Webhook: app.base44.com/api/webhooks/telegram
-- Purpose: Base44 AI agent (this assistant)
-- Mini App: "Open RTV Live" → rtv-frontend.pages.dev
-
-### Bot Status Summary
-All 3 bots: 0 pending updates, 0 errors, all commands set, all Mini Apps wired.
-
----
-
-## 5. TELEGRAM PAYMENTS 2.0 — TEST STORE
-
-### How It Works
-1. User sends /testgoods to bot
-2. Bot shows 5 imaginary goods with inline keyboard
-3. User taps a product → bot calls createInvoiceLink API
-4. Telegram generates payment link (t.me/$...)
-5. User taps link → Telegram invoice opens
-6. User pays with Stars (XTR) — no real money
-7. Bot receives pre_checkout_query → answers OK
-8. Bot receives successful_payment → credits RTV
-9. User gets confirmation message
-
-### API Flow
 ```
-createInvoiceLink (POST)
-  → title, description, payload, currency=XTR, prices, provider_token=""
-  → Returns: t.me/$invoice_link
+Layer 1: LIVE (Human Creators)
+  ├── WebRTC streaming via Telegram Mini App
+  ├── One-tap "Go Live" — camera → Cloudflare Stream → viewers
+  ├── Gifts, PK battles, subscriptions (sovereign payments)
+  └── Sub-second latency, unlimited viewers
 
-pre_checkout_query (webhook)
-  → answerPreCheckoutQuery { ok: true }
+Layer 2: VOD (Persistent Feed — "Tubi on Telegram")
+  ├── AI-generated content channels (Venice AI video)
+  ├── Creator-recorded streams → saved as VOD
+  ├── Content discovery feed (recommendation engine)
+  ├── Free + ad-supported (AVOD model like Tubi)
+  └── Premium tier with private chat experiences
 
-successful_payment (webhook)
-  → Credit RTV to user
-  → Send confirmation
+Layer 3: TV (Roku + Smart TV)
+  ├── Roku SceneGraph app (BrightScript)
+  ├── HLS/DASH playback of VOD content
+  ├── MRSS content feed for Roku Search
+  └── Remote-control navigation (not touch)
 ```
 
-### Test Goods (Both Bots)
-| Product | Stars | RTV Earned | Emoji |
-|---------|-------|------------|-------|
-| Unicorn Horn NFT | 150 | 195 | 🦄 |
-| Dragon Egg | 300 | 390 | 🐉 |
-| Time Machine 1hr | 1000 | 1300 | ⏰ |
-| Phoenix Feather | 50 | 65 | 🔥 |
-| Galaxy Brain | 500 | 650 | 🌌 |
+---
 
-### Key Point
-- provider_token="" means Stars-native payment (no Stripe, no third party)
-- This is exactly how @TestStore works
-- No real money is spent — Stars are Telegram's currency
-- All payment events handled in bot functions
+## LAYER 1: LIVE STREAMING — The Real Build
+
+### Stack:
+- Publisher: WebRTC (WHIP) → browser camera → Cloudflare Stream
+- Viewer: WebRTC (WHEP) → Cloudflare Stream → browser video element
+- Worker: rtv-stream (Cloudflare Worker, LIVE at rtv-stream.rotationtvaicom.workers.dev)
+- Frontend: rtv-go-live.html (Mini App, built and pushed to GitHub)
+- Payments: Telegram Stars (sovereign, no Stripe)
+
+### What's built:
+- ✅ whip-client.js — WHIP publisher (~100 lines, zero dependencies)
+- ✅ whep-client.js — WHEP viewer (~90 lines, zero dependencies)
+- ✅ rtv-go-live.html — Mini App UI with one-tap Go Live
+- ✅ Worker routes designed: /api/stream/create, /api/stream/live, /api/stream/{id}/play, /api/stream/end/{id}
+- ✅ Gift system with 6 gift types (Rose → Crown, 1-500 Stars)
+- ✅ 80/15/5 revenue split (creator/platform/agency)
+
+### What's blocking:
+- 🔴 CLOUDFLARE_STREAM_TOKEN with Stream:Edit permission
+  - This token lets the Worker call POST /stream/live_inputs to create WebRTC endpoints
+  - Without it, the "Go Live" button fails at the API call
+  - 3 tokens created so far all had zero permissions
+  - SOLUTION: Create token with "Account → Stream → Edit" explicitly checked
+
+### What happens when the token is provided:
+1. I inject it as a secret into rtv-stream Worker
+2. The /api/stream/create endpoint starts working
+3. Creator taps "Go Live" → camera opens → WHIP connects → LIVE
+4. Viewer opens stream link → WHEP connects → watching with sub-second latency
+5. Gifts flow via Telegram Stars → creator payout via 80/15/5 split
+
+### Time to live after token: 15 minutes
 
 ---
 
-## 6. SECURITY CHECKLIST
+## LAYER 2: PERSISTENT FEED — "Tubi on Telegram"
 
-| # | Check | Status |
-|---|-------|--------|
-| 1 | No hardcoded secrets in source | ✅ |
-| 2 | All secrets via Deno.env.get() | ✅ 81 instances |
-| 3 | Webhooks use HTTPS | ✅ |
-| 4 | Telegram initData HMAC-SHA256 | ✅ Specified |
-| 5 | Stripe webhook HMAC verification | ✅ Deployed |
-| 6 | Bot tokens rotated | ✅ Old erotica token revoked |
-| 7 | No Stripe on adult content | ✅ Compliance |
-| 8 | Stars payments (provider_token="") | ✅ Sovereign |
-| 9 | CORS headers on Workers | ✅ |
-| 10 | No API keys in frontend | ✅ |
-| 11 | HTTPS enforced (Cloudflare) | ✅ |
-| 12 | 24 entity schemas with RLS | ✅ |
+This is the layer that doesn't exist yet. This is what makes us "bigger than Hulu" — a persistent content library that's always available, not just when someone is live.
 
-### Security Issues
-- ⚠️ Duplicate Telegram tokens (5,10,12 = same as 14) — cleanup needed
-- ⚠️ BASE44_SERVICE_ROLE_KEY not set — blocks entity writes
-- ⚠️ Cloudflare API token lacks Stream:Edit + Zone Workers Routes
+### Architecture:
 
----
+```
+┌─────────────────────────────────────────────────────────┐
+│                 PERSISTENT FEED ARCHITECTURE              │
+├─────────────────────────────────────────────────────────┤
+│                                                           │
+│  ┌──────────────┐    ┌──────────────┐    ┌────────────┐ │
+│  │  AI CONTENT   │    │  CREATOR VOD │    │  LIVE →    │ │
+│  │  (Venice AI)  │    │  (Recorded)  │    │  VOD AUTO  │ │
+│  │               │    │              │    │  -SAVE     │ │
+│  └──────┬───────┘    └──────┬───────┘    └─────┬──────┘ │
+│         │                   │                  │         │
+│         ▼                   ▼                  ▼         │
+│  ┌─────────────────────────────────────────────────────┐│
+│  │           CONTENT LIBRARY (Supabase)                 ││
+│  │  Table: rtv_content                                 ││
+│  │  • video_url (Cloudflare R2 / Stream playback)      ││
+│  │  • thumbnail_url                                    ││
+│  │  • title, description, category, tags               ││
+│  │  • duration, resolution, language                   ││
+│  │  • creator_id (human or 'AI-Venice')                ││
+│  │  • view_count, like_count, tip_count                ││
+│  │  • is_premium (free vs private chat tier)           ││
+│  │  • created_at, expires_at                           ││
+│  └──────────────────────┬──────────────────────────────┘│
+│                         │                                 │
+│                         ▼                                 │
+│  ┌─────────────────────────────────────────────────────┐│
+│  │         RECOMMENDATION FEED (Worker)                  ││
+│  │  /api/feed/trending — most viewed last 24h           ││
+│  │  /api/feed/new — latest uploads                      ││
+│  │  /api/feed/ai — AI-generated channels                ││
+│  │  /api/feed/live — currently live streams             ││
+│  │  /api/feed/following — creators you follow           ││
+│  │  /api/feed/premium — private chat experiences        ││
+│  └──────────────────────┬──────────────────────────────┘│
+│                         │                                 │
+│                         ▼                                 │
+│  ┌─────────────────────────────────────────────────────┐│
+│  │      TELEGRAM MINI APP (Cloudflare Pages)             ││
+│  │  Horizontal scroll feed (like TikTok/Tubi)           ││
+│  │  Category tabs: For You | Live | AI | Trending       ││
+│  │  Tap to play → video fills screen                    ││
+│  │  Swipe up for next video                             ││
+│  │  Double-tap to tip (Stars)                           ││
+│  └─────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────┘
+```
 
-## 7. WebRTC STREAMING (Bigo/Tango Architecture)
+### AI Content Generation Pipeline (Venice AI):
 
-### Flow
-1. User taps "Go Live" → Mini App calls /api/stream/create
-2. Worker calls Cloudflare Stream API → creates live input → returns WHIP + WHEP URLs
-3. Mini App calls getUserMedia() → camera opens
-4. WHIP client publishes to Cloudflare via WebRTC → <1s latency
-5. Viewers tap stream → WHEP client plays → <1s latency
-6. User taps "End Stream" → WebRTC closed → camera released
+Venice AI can generate video. Confirmed working:
+- API: POST https://api.venice.ai/api/v1/video/queue
+- Cost: $0.95 for 5s 720p video
+- Models: seedance-2-0-text-to-video, kling-v3 (4K)
+- Max duration: 30 seconds
+- Supports: text-to-video, image-to-video, reference-to-video, audio
 
-### What's Different from Before
-- ❌ NO RTMP URLs
-- ❌ NO stream keys
-- ❌ NO OBS required
-- ❌ NO encoder configuration
-- ✅ 1 tap → camera → LIVE
-- ✅ <1 second latency
-- ✅ Unlimited concurrent viewers
-- ✅ Works on mobile browser + Telegram Mini App
+### AI Channel Concept:
 
-### Blocker
-Cloudflare Stream API needs a token with Stream:Edit permission to create real live inputs. Currently returns mock URLs. The Mini App code is ready — it will work with real WebRTC the moment the token is updated.
+Instead of one-off videos, we create **AI channels** — automated content pipelines that generate videos on a schedule:
 
----
+| Channel | Content | Schedule | Model |
+|---------|---------|----------|-------|
+| RTV News | Crypto/Web3 news summaries | 3x daily | seedance-2-0-text-to-video |
+| RTV Market | Token price analysis videos | Hourly | seedance-2-0-text-to-video |
+| RTV Education | AI/Web3 tutorial clips | Daily | seedance-2-0-text-to-video |
+| RTV Culture | Urban culture highlights | 2x weekly | kling-v3 (4K) |
+| RTV Promo | Ecosystem company promos | Weekly | seedance-2-0-text-to-video |
 
-## 8. BACKEND FUNCTIONS — 35 LIVE
+### AI Content Generation Flow:
 
-### Payment Functions (6)
-1. rtvPaymentHub — Stars/TON/RTV payment processing
-2. rtvPayoutEngine — Creator payouts, tips, PK, milestones
-3. stripe-webhook — HMAC verification + Discord alerts
-4. rotationPayGateway — Multi-rail router (sovereign only)
-5. rotationPayConnect — Merchant onboarding
-6. telegramWalletBridge — Telegram @wallet deep links
+```
+1. Scheduled trigger (Supabase Cron or Base44 automation)
+   ↓
+2. Venice AI text model generates script from topic
+   ↓
+3. Venice AI video model generates 5-10s clip from script
+   ↓
+4. Video downloaded from Venice → uploaded to Cloudflare R2
+   ↓
+5. Metadata stored in Supabase rtv_content table
+   ↓
+6. Video appears in persistent feed for viewers
+   ↓
+7. Revenue: ad-supported (free) or premium (private chat)
+```
 
-### Bot Functions (2)
-7. rtvLiveBot — @RotationLivestram_bot handler
-8. rtvEroticaBot — @ROTATIONEROTICA_BOT handler
+### Content Storage:
+- Videos: Cloudflare R2 bucket (already have 1 R2 bucket)
+- Thumbnails: Cloudflare R2 or generate via Venice AI image models
+- Metadata: Supabase rtv_content table (new table needed)
+- Delivery: Cloudflare Stream playback URLs or R2 public URLs
 
-### AI Functions (5)
-9. rtvDeepThinkEngine — Master enhancement engine
-10. veniceGateway — Venice AI integration
-11. emergentClaudeUnified — Claude orchestration
-12. rtvMasterEnhancement — Ecosystem enhancement
-13. dailyEcosystemEnhancement — Daily auto-improvement
+### What needs to be built for Layer 2:
+1. **rtv_content table** in Supabase (content library schema)
+2. **AI content generation Worker** — scheduled job that calls Venice AI, downloads video, stores in R2
+3. **Feed API endpoints** on rtv-stream Worker — /api/feed/trending, /api/feed/new, /api/feed/ai, /api/feed/live
+4. **Feed UI** in Mini App — horizontal scroll, category tabs, video player
+5. **Cloudflare R2 integration** — upload/download videos from the edge
 
-### Infrastructure Functions (8)
-14. ecosystemHealthCheck — Health monitoring
-15. githubDigestPoster — Dev activity digest
-16. gmailEcosystemMonitor — Email monitoring
-17. openClawEmergentBridge — OpenClaw integration
-18. rotationCallDebugger — Call debugging
-19. rotationCallEmergentSync — Call sync
-20. rotationCallWeb3Bridge — Web3 bridge
-21. rtvEdgeGateway — Edge routing
-
-### Stream/Platform Functions (5)
-22. rtvStreamBot — Stream management
-23. rtvMiniApp — Mini App backend
-24. rtvPromoBroadcast — Promotional broadcasts
-25. rtvCreatorPortal — Creator dashboard
-26. rtvWalletDashboard — Wallet UI
-
-### Auth & Security (3)
-27. rtvAuthGateway — Authentication
-28. rtvWalletDashboard — Wallet management
-29. vaultInitVerify — Vault verification
-
-### Other Functions (6)
-30. bigoModeratorBot — Content moderation
-31. customerMentorBot — Customer support
-32. openClawEmergentBridge — Bridge
-33. rotationPayBot — Payment bot
-34. telegramWalletBridge — Wallet bridge
-35. rtvTrading — Trading interface
-
----
-
-## 9. CLOUDFLARE WORKERS — 4 EDGE NODES
-
-| Worker | URL | Version | Purpose |
-|--------|-----|---------|---------|
-| rtv-edge-gateway | rtv-edge-gateway.rotationtvaicom.workers.dev | v3.0.0 | Unified API router |
-| rtv-payments | rtv-payments.rotationtvaicom.workers.dev | v3.0.0 | Sovereign payments |
-| rtv-blockchain | rtv-blockchain.rotationtvaicom.workers.dev | v3.0.0 | Solana + TON |
-| rtv-stream | rtv-stream.rotationtvaicom.workers.dev | v4.0.0 | WebRTC streaming |
-
-### Cloudflare Account
-- Account ID: 7e431c541ea0f39d7f7fe5fd9f06eada
-- Workers subdomain: rotationtvaicom
-- Zones: rotationcall.net, rotationomega.org, rotationpay.net
-- R2 bucket: 1 active
+### Estimated build time: 2-3 days (once Stream token is in)
 
 ---
 
-## 10. LAUNCH SEQUENCE — 3-MINUTE DEPLOY
+## LAYER 3: ROKU APP — TV on the Big Screen
 
-### What Works RIGHT NOW
-1. ✅ Open @RotationLivestram_bot → send /start → get welcome
-2. ✅ Send /testgoods → see 5 imaginary goods → tap → pay with Stars
-3. ✅ Send /buy → create RTV invoice → pay with Stars
-4. ✅ Open Mini App → see full UI (Home/Live/Gifts/Wallet)
-5. ✅ Tap Go Live → camera opens (WebRTC, mock URLs for now)
-6. ✅ Browse gifts, subscription tiers, balance
-7. ✅ All 3 bots responding with 0 errors
+### The Real Constraint:
+Roku's Direct Publisher program was **sunset January 2024**. You can no longer create a simple feed-based Roku channel. The only path is building a full **SceneGraph SDK app** in BrightScript — Roku's proprietary language.
 
-### What Needs Darrel's Action
-1. **Cloudflare Stream API token** — Create token with Stream:Edit permission → enables real WebRTC live inputs
-2. **BASE44_SERVICE_ROLE_KEY** — Add in Settings → Secrets → enables entity writes
-3. **Cloudflare Zone Workers Routes** — Add to API token → enables custom domains
-4. **Venice AI credits** — Add $5+ → activates AI layer
+### What This Means:
+- A Roku app is a real development project (not a feed submission)
+- BrightScript is similar to BASIC but with modern features
+- SceneGraph uses XML + BrightScript for UI
+- Video playback uses HLS or DASH (NOT WebRTC — Roku doesn't support WHIP/WHEP)
+- Content must be in HLS/DASH format (Cloudflare Stream can transcode live → HLS)
 
-### 30-Second Test
-1. Open Telegram
-2. Search @RotationLivestram_bot
-3. Send /start
-4. Send /testgoods
-5. Tap any imaginary good
-6. Pay with Stars (test — no real money)
-7. Get RTV credited
+### Roku App Architecture:
 
----
+```
+Roku Device
+    │
+    ├── SceneGraph App (BrightScript + XML)
+    │   ├── Home Screen — content grid (trending, live, categories)
+    │   ├── Video Player — HLS playback via roVideoPlayer
+    │   ├── Search — Roku Search integration (MRSS feed)
+    │   ├── Auth — Telegram ID linking (QR code or code entry)
+    │   └── Monetization — Roku Pay (subscriptions) + Ads (RAF)
+    │
+    ├── Content Feed (JSON API from our Worker)
+    │   ├── GET /api/roku/feed → MRSS-formatted content list
+    │   ├── GET /api/roku/categories → category grid
+    │   └── GET /api/roku/search → search results
+    │
+    └── Video Delivery
+        ├── Live streams → Cloudflare Stream HLS output
+        └── VOD content → Cloudflare R2 + HLS packaging
+```
 
-## 11. ENTITY SCHEMAS — 24 DATA MODELS
+### Key Insight: Cloudflare Stream bridges WebRTC and HLS
 
-### Web3 & Blockchain (7)
-Web3Wallet, RTVToken, RotationPayTransaction, NFTAsset, Web3Session, ChainstackNode, WalletIntegration
+When a creator goes live via WebRTC (WHIP), Cloudflare Stream automatically creates an HLS output. This means:
+- Telegram Mini App viewers watch via WebRTC (sub-second latency)
+- Roku viewers watch the SAME stream via HLS (2-5 second latency, but TV-grade)
+- VOD content is stored as HLS by Cloudflare Stream for replay
 
-### Streaming & Creator (12)
-RTVMintOperation, BalanceCheck, LiveStream, GiftItem, StreamTip, PKBattle, CreatorSubscription, CreatorPayout, AgencyRoster, Leaderboard, SubscriptionTier, CreatorEarning
+This is the architecture that makes "TV on Telegram" real — one stream, two delivery methods.
 
-### Payments & Revenue (4)
-PaymentRoute, RevenueSplit, ComboMultiplier, CreatorWithdrawal
+### Roku Build Requirements:
+1. Roku developer account ($0, register at developer.roku.com)
+2. SceneGraph SDK app (BrightScript + XML)
+3. MRSS content feed endpoint on our Worker
+4. HLS video delivery (Cloudflare Stream handles this)
+5. Roku Pay integration for premium subscriptions
+6. Roku Advertising Framework for free tier ads
+7. Certification testing before publication
 
-### Infrastructure (5)
-RTVMintOperation, CloudflareAsset, HeyGenVideo, RTVAPIKey, OmegaAuditLog
-
-### AI & Automation (3)
-ManusAITask, ManusWebhook, EmergentIntegration, EmergentBuild
-
-### Voice & Communication (3)
-VoIPNumber, CallForwarding, MentorSession
-
-### Other (3)
-RTVCompany, DNSRecord, OpenClawAgent, OpenClawConfig, AcademyCredit, RotationPayMerchant, CreatorMilestone
-
----
-
-## 12. EACH BOT AS STANDALONE COMPANY
-
-Darrel requested each bot represents a standalone company in the Telegram ecosystem:
-
-### @RotationLivestram_bot → RotationTV Live (Streaming Company)
-- Company: RotationTV Network
-- Revenue: Tips, gifts, subscriptions, PK battles
-- Payment rail: Stars (XTR)
-- Users: Creators + viewers
-- Mini App: Full streaming interface
-
-### @ROTATIONEROTICA_BOT → Rotation Erotica (Adult Platform Company)
-- Company: Rotation Erotica
-- Revenue: 18+ tips, gifts, subscriptions
-- Payment rail: Stars ONLY (no Stripe — compliance)
-- Users: Adult creators + viewers (18+)
-- Mini App: 18+ streaming interface
-
-### @base44_229784_bot → RTV Command Center (AI Agent)
-- Company: RotationTV AI
-- Revenue: Ecosystem management
-- Purpose: AI agent for Darrel + Nick
-- Not a consumer bot — internal operations
-
-### BotFather Verification Checklist
-Before sending any commands, verify:
-- [x] getMe → 200 (bot exists)
-- [x] getWebhookInfo → URL set, 0 pending, 0 errors
-- [x] getMyCommands → all commands set
-- [x] getChatMenuButton → Mini App URL correct
-- [x] setMyDescription → description set
-- [x] setMyShortDescription → short description set
-- [x] createInvoiceLink → test invoice works
-- [x] answerPreCheckoutQuery → payment flow works
-- [x] successful_payment handler → RTV credited
+### Estimated build time: 2-3 weeks (separate from Telegram launch)
 
 ---
 
-*RotationTV Network | Full Ecosystem Launch Playbook v4.0 | July 2026*
-*Presidential Authority: Darrel — Owner & CEO*
+## THE "PRIVATE CHAT" PREMIUM TIER
+
+### What it is:
+A premium content tier where viewers pay for private, 1-on-1 experiences with creators — similar to OnlyFans but on Telegram, using sovereign payments (Stars/TON/RTV).
+
+### Architecture:
+
+```
+Free Tier (AVOD — like Tubi)
+  ├── All public live streams
+  ├── All public VOD content
+  ├── AI-generated channels
+  └── Ad-supported (or no ads — sovereign model)
+
+Premium Tier (Private Chat — "X-Rates")
+  ├── Private 1-on-1 video calls with creators
+  ├── Exclusive premium VOD content
+  ├── Direct messaging with creators
+  ├── Custom video requests (creator records for viewer)
+  ├── AI companion chat (Venice AI uncensored models)
+  └── Payment: Telegram Stars / TON / RTV credits
+```
+
+### Premium Features:
+1. **Private Video Call** — creator and viewer in a WebRTC room (2-person, not broadcast)
+2. **Exclusive Content** — premium-tagged VOD only accessible to paying subscribers
+3. **Direct Chat** — Telegram-based DM with creator (rate-limited for free, unlimited for premium)
+4. **Custom Requests** — viewer pays RTV tokens for custom video from creator
+5. **AI Companion** — Venice AI uncensored model as a chat companion (text + voice)
+
+### Payment Flow:
+```
+Viewer taps "Go Private" → Telegram Stars invoice → payment confirmed
+  → Private WebRTC room created → 1-on-1 video starts
+  → Timer counts down (minutes purchased) → session ends when time expires
+```
+
+### Compliance:
+- 18+ age gate (already built for Erotica platform)
+- Creator verification (KYC via Supabase)
+- Content moderation (AI + human review)
+- Payment via sovereign rails only (no Stripe on adult content)
+
+---
+
+## THE ACTUAL TECH STACK — No Fiction
+
+### Where Everything Is Hosted:
+
+| Component | Hosted On | URL/Endpoint |
+|-----------|-----------|-------------|
+| Frontend SPA | Cloudflare Pages | rtv-frontend.pages.dev |
+| Edge Gateway | Cloudflare Worker | rtv-edge-gateway.rotationtvaicom.workers.dev |
+| Payments | Cloudflare Worker | rtv-payments.rotationtvaicom.workers.dev |
+| Blockchain | Cloudflare Worker | rtv-blockchain.rotationtvaicom.workers.dev |
+| Streaming | Cloudflare Worker | rtv-stream.rotationtvaicom.workers.dev |
+| Console | Cloudflare Worker | rtv-bot-console.rotationtvaicom.workers.dev |
+| Database | Supabase | xynkgaxfwvpcixissxdz.supabase.co |
+| AI (text/image/video) | Venice AI | api.venice.ai |
+| AI (text) | Anthropic | api.anthropic.com |
+| AI (text) | Google Gemini | generativelanguage.googleapis.com |
+| Bot 1 (Live) | Base44 edge function | @RotationLivestram_bot |
+| Bot 2 (Erotica) | Base44 edge function | @ROTATIONEROTICA_BOT |
+| Bot 3 (Agent) | Base44 webhook | @base44_229784_bot |
+| Video Storage | Cloudflare R2 | (1 bucket active) |
+| Video Delivery | Cloudflare Stream | (needs Stream:Edit token) |
+| GitHub | GitHub.com | github.com/rotationtv1-crypto |
+| Domain | DNS zones | rotationpay.net, rotationcall.net, rotationomega.org |
+
+### What We Are NOT Using:
+- ❌ Vercel (replaced by Cloudflare)
+- ❌ MongoDB (replaced by Supabase Postgres)
+- ❌ Stripe (purged — sovereign payments only)
+- ❌ PayPal (purged)
+- ❌ RTMP/OBS (replaced by WebRTC WHIP/WHEP)
+- ❌ Next.js (we use React SPA, not SSR)
+- ❌ Rails (we use Cloudflare Workers + React)
+
+---
+
+## LAUNCH SEQUENCE — What Actually Needs to Happen
+
+### Phase 1: UNBLOCK STREAMING (Darrel action needed)
+- [ ] Create Cloudflare token with Stream:Edit permission
+- [ ] Send token to agent for injection into rtv-stream Worker
+- [ ] Agent injects token → tests Live Input creation → confirms WHIP/WHEP works
+
+### Phase 2: BUILD PERSISTENT FEED (Agent builds, 2-3 days)
+- [ ] Create rtv_content table in Supabase (content library schema)
+- [ ] Build feed API endpoints on rtv-stream Worker
+- [ ] Build AI content generation pipeline (Venice AI → R2 → Supabase)
+- [ ] Build feed UI in Mini App (horizontal scroll, categories, player)
+- [ ] Set up Supabase Cron for scheduled AI content generation
+- [ ] Test: AI generates 5s video → stored in R2 → appears in feed → viewer watches
+
+### Phase 3: GO LIVE (Creator onboarding)
+- [ ] Creator opens Mini App → taps "Go Live" → camera opens → streaming
+- [ ] Live stream auto-recorded → saved as VOD after stream ends
+- [ ] VOD appears in persistent feed for replay
+- [ ] Gifts flow via Telegram Stars → 80/15/5 payout
+- [ ] Test 10 creators going live simultaneously
+
+### Phase 4: PREMIUM TIER
+- [ ] Build "Go Private" feature (1-on-1 WebRTC rooms)
+- [ ] Build exclusive content tagging in rtv_content table
+- [ ] Build AI companion chat (Venice uncensored models)
+- [ ] Build subscription tiers in Mini App
+- [ ] Test: viewer pays Stars → private session starts → timer counts → ends
+
+### Phase 5: ROKU APP (2-3 weeks, separate track)
+- [ ] Register Roku developer account
+- [ ] Build SceneGraph app (BrightScript + XML)
+- [ ] Build MRSS feed endpoint on Worker
+- [ ] Integrate Roku Pay for subscriptions
+- [ ] Integrate Roku Advertising Framework for free tier
+- [ ] Pass certification testing
+- [ ] Publish to Roku Channel Store
+
+### Phase 6: SCALE
+- [ ] AI channels running 24/7 (Venice AI generating content on schedule)
+- [ ] 100+ creators live streaming
+- [ ] 10,000+ VOD titles in persistent feed
+- [ ] Roku app live in Channel Store
+- [ ] Marketing campaign across Telegram, X, TikTok, Discord
+- [ ] $RTV token integrated into all payment flows
+
+---
+
+## WHAT I CAN BUILD RIGHT NOW (without the Stream token)
+
+Even without the Stream:Edit token, I can start building Layer 2 (persistent feed):
+
+1. **rtv_content table** in Supabase — content library schema
+2. **AI content generation pipeline** — Venice AI → video → R2 → Supabase
+3. **Feed API endpoints** — trending, new, AI, live categories
+4. **Feed UI in Mini App** — horizontal scroll video player
+5. **First AI-generated videos** — test Venice AI video generation end-to-end
+
+This means the "Tubi on Telegram" persistent feed can start being built immediately, in parallel with unblocking the live streaming.
+
+---
+
+## COST ANALYSIS — Real Numbers
+
+| Component | Cost | Notes |
+|-----------|------|-------|
+| Cloudflare Workers | $0 (free tier: 100K req/day) | We're well within limits |
+| Cloudflare Pages | $0 (free tier) | Unlimited static hosting |
+| Cloudflare R2 | $0.015/GB stored + $0 egress | Video storage |
+| Cloudflare Stream | $5/1K min stored + $1/1K min delivered | After WebRTC GA |
+| Supabase | $0 (free tier: 500MB DB, 50K MAU) | May need Pro ($25/mo) for scale |
+| Venice AI | ~$0.95 per 5s video | $5.70 per 30s clip |
+| Telegram Bot API | $0 | Free for bots |
+| Base44 | Credits-based | Included in platform |
+| Roku Developer | $0 | Free to publish |
+
+### AI Content Cost Example:
+- 5 AI channels × 3 videos/day × $0.95/video = $14.25/day
+- Monthly: ~$427 for AI-generated content
+- This produces 450 videos/month (5s each) = 37.5 minutes of content
+- For 30s videos: $5.70 × 15/day = $85.50/day = ~$2,565/month
+- This produces 450 videos/month (30s each) = 225 minutes of content
+
+### Revenue Model:
+- Free tier: Ad-supported (or sovereign — no ads, token-funded)
+- Premium tier: $9.99-$49.99/month (Telegram Stars equivalent)
+- Creator gifts: 80/15/5 split (creator/platform/agency)
+- Token integration: $RTV used for tips, subscriptions, premium features
+
+---
+
+*RotationTV Network | Full Launch Playbook v4.0 | July 3, 2026*
 *"Learn it. Live it. Love it. — We keep business rotating globally."*
+*Presidential Authority: Darrel — Owner & CEO*
