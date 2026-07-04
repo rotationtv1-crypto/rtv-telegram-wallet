@@ -1,7 +1,7 @@
 -- RotationTV Network — Persistent Content Feed (Tubi on Telegram)
 -- Creates the content library table for VOD + AI-generated content
 
-CREATE TABLE IF NOT EXISTS rtv_content (
+CREATE TABLE IF NOT EXISTS "RtvContent" (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   -- Content identification
@@ -54,17 +54,17 @@ CREATE TABLE IF NOT EXISTS rtv_content (
 );
 
 -- Indexes for feed queries
-CREATE INDEX idx_content_category ON rtv_content(category) WHERE status = 'active';
-CREATE INDEX idx_content_creator ON rtv_content(creator_id) WHERE status = 'active';
-CREATE INDEX idx_content_featured ON rtv_content(is_featured) WHERE status = 'active' AND is_featured = true;
-CREATE INDEX idx_content_trending ON rtv_content(view_count DESC, created_at DESC) WHERE status = 'active';
-CREATE INDEX idx_content_new ON rtv_content(created_at DESC) WHERE status = 'active';
-CREATE INDEX idx_content_ai ON rtv_content(creator_type) WHERE status = 'active' AND creator_type = 'ai';
-CREATE INDEX idx_content_premium ON rtv_content(is_premium) WHERE status = 'active' AND is_premium = true;
-CREATE INDEX idx_content_source_type ON rtv_content(source_type) WHERE status = 'active';
+CREATE INDEX idx_rtvcontent_category ON "RtvContent"(category) WHERE status = 'active';
+CREATE INDEX idx_rtvcontent_creator ON "RtvContent"(creator_id) WHERE status = 'active';
+CREATE INDEX idx_rtvcontent_featured ON "RtvContent"(is_featured) WHERE status = 'active' AND is_featured = true;
+CREATE INDEX idx_rtvcontent_trending ON "RtvContent"(view_count DESC, created_at DESC) WHERE status = 'active';
+CREATE INDEX idx_rtvcontent_new ON "RtvContent"(created_at DESC) WHERE status = 'active';
+CREATE INDEX idx_rtvcontent_ai ON "RtvContent"(creator_type) WHERE status = 'active' AND creator_type = 'ai';
+CREATE INDEX idx_rtvcontent_premium ON "RtvContent"(is_premium) WHERE status = 'active' AND is_premium = true;
+CREATE INDEX idx_rtvcontent_source_type ON "RtvContent"(source_type) WHERE status = 'active';
 
 -- AI channels table (for automated content generation)
-CREATE TABLE IF NOT EXISTS rtv_ai_channels (
+CREATE TABLE IF NOT EXISTS "RtvAiChannel" (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   channel_name TEXT NOT NULL UNIQUE,
@@ -104,9 +104,9 @@ INSERT INTO rtv_ai_channels (channel_name, description, category, prompt_templat
 ON CONFLICT (channel_name) DO NOTHING;
 
 -- Feed views table (for analytics)
-CREATE TABLE IF NOT EXISTS rtv_feed_views (
+CREATE TABLE IF NOT EXISTS "RtvFeedView" (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  content_id UUID REFERENCES rtv_content(id) ON DELETE CASCADE,
+  content_id UUID REFERENCES "RtvContent"(id) ON DELETE CASCADE,
   viewer_id TEXT NOT NULL, -- telegram_id
   viewed_at TIMESTAMPTZ DEFAULT now(),
   watch_duration_sec INTEGER DEFAULT 0,
@@ -114,32 +114,32 @@ CREATE TABLE IF NOT EXISTS rtv_feed_views (
   shared BOOLEAN DEFAULT FALSE
 );
 
-CREATE INDEX idx_views_content ON rtv_feed_views(content_id);
-CREATE INDEX idx_views_viewer ON rtv_feed_views(viewer_id);
+CREATE INDEX idx_rtvfeedview_content ON "RtvFeedView"(content_id);
+CREATE INDEX idx_rtvfeedview_viewer ON "RtvFeedView"(viewer_id);
 
 -- Row Level Security
-ALTER TABLE rtv_content ENABLE ROW LEVEL SECURITY;
-ALTER TABLE rtv_ai_channels ENABLE ROW LEVEL SECURITY;
-ALTER TABLE rtv_feed_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "RtvContent" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "RtvAiChannel" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "RtvFeedView" ENABLE ROW LEVEL SECURITY;
 
 -- Public can read active content
-CREATE POLICY "public_read_content" ON rtv_content
+CREATE POLICY "public_read_content" ON "RtvContent"
   FOR SELECT USING (status = 'active');
 
 -- Only service role can insert/update content
-CREATE POLICY "service_insert_content" ON rtv_content
+CREATE POLICY "service_insert_content" ON "RtvContent"
   FOR INSERT WITH CHECK (true);
 
-CREATE POLICY "service_update_content" ON rtv_content
+CREATE POLICY "service_update_content" ON "RtvContent"
   FOR UPDATE USING (true);
 
 -- Public can read active AI channels
-CREATE POLICY "public_read_channels" ON rtv_ai_channels
+CREATE POLICY "public_read_channels" ON "RtvAiChannel"
   FOR SELECT USING (is_active = true);
 
 -- Viewers can see their own views
-CREATE POLICY "viewer_own_views" ON rtv_feed_views
+CREATE POLICY "viewer_own_views" ON "RtvFeedView"
   FOR SELECT USING (true);
 
-CREATE POLICY "service_insert_views" ON rtv_feed_views
+CREATE POLICY "service_insert_views" ON "RtvFeedView"
   FOR INSERT WITH CHECK (true);
