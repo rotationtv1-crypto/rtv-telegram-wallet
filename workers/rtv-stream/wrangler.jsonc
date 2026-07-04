@@ -11,5 +11,8 @@
     "RTV_VERSION": "3.0.0",
     "RTV_PARITY": "1 RTV = 0.01 USD"
   },
-  "workers_dev": true
+  "workers_dev": true,
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  }
 }

@@ -17,6 +17,8 @@ const RTV_PER_STAR = 1.3; // 1 Star = $0.013
 
 // How long a viewer heartbeat (a play-endpoint poll) counts as "still watching"
 const VIEWER_PRESENCE_WINDOW_MS = 30_000;
+// How long a viewer row can go untouched before the prune cron deletes it
+const STALE_VIEWER_MAX_AGE_MS = 60 * 60 * 1000;
 
 function sbConfigured(env) {
   return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY);
@@ -469,6 +471,29 @@ export default {
     }
 
     return jsonResponse({ error: 'Not found', path }, 404);
+  },
+
+  // Runs on the cron schedule in wrangler.jsonc (every 15 min). Prunes
+  // stream_viewers rows nobody's heartbeat has touched in over an hour —
+  // otherwise the presence table grows forever since rows are only ever
+  // upserted/read, never deleted, by the fetch handler.
+  async scheduled(event, env, ctx) {
+    if (!sbConfigured(env)) {
+      console.warn('[rtv-stream cron] skipped: SUPABASE_URL/SUPABASE_SERVICE_KEY not configured');
+      return;
+    }
+    const cutoff = new Date(Date.now() - STALE_VIEWER_MAX_AGE_MS).toISOString();
+    const res = await sbFetch(env, `stream_viewers?last_seen_at=lt.${encodeURIComponent(cutoff)}`, {
+      method: 'DELETE',
+      headers: { 'Prefer': 'count=exact' }
+    }).catch((err) => ({ ok: false, statusText: err.message }));
+
+    if (!res.ok) {
+      console.error('[rtv-stream cron] prune failed:', res.statusText || res.status);
+      return;
+    }
+    const pruned = res.headers.get('content-range')?.split('/')?.[1];
+    console.log(`[rtv-stream cron] pruned stale stream_viewers rows: ${pruned ?? 'unknown count'}`);
   }
 };
 
