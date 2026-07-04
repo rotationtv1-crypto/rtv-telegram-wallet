@@ -1,28 +1,29 @@
-# RTV Edge Gateway
+# rtv-edge-gateway
 
-Cloudflare Worker for the Rotation Erotica streaming + gifting platform.
+Edge gateway for RotationTV streaming + gifting. Targets the real Rotation Erotica schema.
 
 ## Auth Model
 
-Uses **Supabase sessions** obtained via `telegram-auth-bridge` — NOT raw Telegram `initData`. The Mini App client calls the bridge once, gets a Supabase session, and passes `Authorization: Bearer <token>` to this worker.
+Uses **Supabase session tokens** (not raw Telegram initData). The Mini App client calls `telegram-auth-bridge` once to get a Supabase session, then passes `Authorization: Bearer <token>` to this worker.
 
 ## Routes
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/api/stream/create` | Supabase | Create live stream (CF Stream + DB row) |
-| POST | `/api/stream/:id/end` | Supabase | End stream (owner only) |
-| GET | `/api/stream/:id/play` | None | Get WHEP playback URL |
-| GET | `/api/streams` | None | List live streams |
-| POST | `/api/gift/send` | Supabase | Send gift (server-priced, rate-limited) |
-| POST | `/webhook/stream` | HMAC | Cloudflare Stream events |
+| GET | `/` | No | Health check |
+| POST | `/api/stream/create` | Yes | Create live stream (CF Stream + live_rooms) |
+| POST | `/api/stream/:id/end` | Yes | End stream (owner only) |
+| GET | `/api/stream/:id/play` | No | Get WHEP playback URL |
+| GET | `/api/streams` | No | List live streams |
+| POST | `/api/gift/send` | Yes | Send gift (server-priced, no client amount) |
+| POST | `/webhook/stream` | CF | Cloudflare Stream webhook |
 
 ## Security
 
-- `transfer_rtv` restricted to service_role only — no client RPC calls
-- Gift prices looked up server-side — no client-supplied amounts
-- `live_rooms` server-controlled columns protected by trigger
-- Rate limiting on gift sends (10/30s per user per room)
+- `transfer_rtv` only callable by service_role (client direct RPC blocked)
+- Gift amounts priced server-side from `gifts` catalog (client never supplies amount)
+- `live_rooms` stream credentials protected by trigger (creators can't overwrite)
+- Rate limiting on gift sends (20/min via KV)
 
 ## Deploy
 
@@ -32,8 +33,9 @@ npx wrangler login
 npx wrangler secret put SUPABASE_URL
 npx wrangler secret put SUPABASE_ANON_KEY
 npx wrangler secret put SUPABASE_SERVICE_KEY
+npx wrangler secret put CF_STREAM_API_TOKEN
 npx wrangler secret put CF_ACCOUNT_ID
-npx wrangler secret put CF_STREAM_TOKEN
 npx wrangler secret put CF_STREAM_SIGNING_KEY
+npx wrangler secret put WEBHOOK_SECRET
 npx wrangler deploy
 ```
