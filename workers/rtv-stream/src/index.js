@@ -95,11 +95,48 @@ export default {
 
     if (path.startsWith('/api/stream/play/') && method === 'GET') {
       const streamId = path.split('/').pop();
+      if (!streamId) {
+        return jsonResponse({ success: false, error: 'stream_id is required' }, 400);
+      }
+      if (!env.CLOUDFLARE_ACCOUNT_ID || !env.CLOUDFLARE_STREAM_TOKEN) {
+        return jsonResponse({
+          success: false,
+          error: 'Stream is not configured on this Worker (missing CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_STREAM_TOKEN secret)'
+        }, 500);
+      }
+
+      const cfRes = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/stream/live_inputs/${streamId}`,
+        { headers: { 'Authorization': `Bearer ${env.CLOUDFLARE_STREAM_TOKEN}` } }
+      );
+
+      const cfData = await cfRes.json();
+      if (cfRes.status === 404) {
+        return jsonResponse({ success: false, error: 'stream not found', stream_id: streamId }, 404);
+      }
+      if (!cfRes.ok || !cfData.success) {
+        return jsonResponse({
+          success: false,
+          error: cfData.errors?.[0]?.message || `Cloudflare Stream API error (HTTP ${cfRes.status})`,
+          cf_status: cfRes.status
+        }, cfRes.status === 401 || cfRes.status === 403 ? cfRes.status : 502);
+      }
+
+      const input = cfData.result;
+      const connectionState = input.status?.current?.state || 'disconnected';
+      const isLive = connectionState === 'connected' || connectionState === 'reconnected';
+
       return jsonResponse({
-        stream_id: streamId,
-        status: 'live',
-        playback_url: `https://watch.cloudflarestream.com/${streamId}`,
-        viewer_count: Math.floor(Math.random() * 1000) + 50,
+        success: true,
+        stream_id: input.uid,
+        status: isLive ? 'live' : 'offline',
+        connection_state: connectionState,
+        whip_url: input.webRTC?.url,
+        whep_url: input.webRTCPlayback?.url,
+        // Not backed by real data: this Worker has no KV/D1/Supabase binding
+        // to track concurrent viewers or a tip ledger. Wire that storage
+        // before treating these as anything but placeholders.
+        viewer_count: 0,
         tips_total_rtv: 0,
         tip_count: 0
       });
