@@ -37,14 +37,57 @@ export default {
     // Stream management
     if (path === '/api/stream/create' && method === 'POST') {
       const body = await request.json();
+      const creatorId = body.creator_id;
+      if (!creatorId) {
+        return jsonResponse({ success: false, error: 'creator_id is required' }, 400);
+      }
+      if (!env.CLOUDFLARE_ACCOUNT_ID || !env.CLOUDFLARE_STREAM_TOKEN) {
+        return jsonResponse({
+          success: false,
+          error: 'Stream is not configured on this Worker (missing CLOUDFLARE_ACCOUNT_ID or CLOUDFLARE_STREAM_TOKEN secret)'
+        }, 500);
+      }
+
+      const title = body.title || 'Untitled Stream';
+      const category = body.category || 'general';
+
+      const cfRes = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/stream/live_inputs`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.CLOUDFLARE_STREAM_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            meta: { creator_id: creatorId, title, category, ecosystem: 'RotationTV' },
+            recording: { mode: 'automatic', timeoutSeconds: 14400 }
+          })
+        }
+      );
+
+      const cfData = await cfRes.json();
+      if (!cfRes.ok || !cfData.success) {
+        // Surface Cloudflare's actual error (e.g. missing Stream:Edit permission)
+        // instead of a generic 500, so the permission gap is directly visible.
+        return jsonResponse({
+          success: false,
+          error: cfData.errors?.[0]?.message || `Cloudflare Stream API error (HTTP ${cfRes.status})`,
+          cf_status: cfRes.status
+        }, cfRes.status === 401 || cfRes.status === 403 ? cfRes.status : 502);
+      }
+
+      const input = cfData.result;
       return jsonResponse({
         success: true,
-        stream_id: crypto.randomUUID(),
-        stream_key: btoa(crypto.getRandomValues(new Uint8Array(16)).join('')),
-        rtmp_url: 'rtmp://live.cloudflare.com/live',
-        playback_url: `https://rtv-stream.rotationtvaicom.workers.dev/api/stream/play/${crypto.randomUUID()}`,
-        title: body.title || 'Untitled Stream',
-        creator_id: body.creator_id,
+        stream_id: input.uid,
+        whip_url: input.webRTC?.url,
+        whep_url: input.webRTCPlayback?.url,
+        rtmp_url: input.rtmps?.url,
+        rtmp_stream_key: input.rtmps?.streamKey,
+        title,
+        category,
+        creator_id: creatorId,
         status: 'ready',
         created_at: new Date().toISOString()
       });
