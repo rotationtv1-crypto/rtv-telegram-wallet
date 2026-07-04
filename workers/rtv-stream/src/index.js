@@ -15,6 +15,25 @@ const JSON_HEADERS = { ...CORS, 'Content-Type': 'application/json' };
 const RTV_PER_USD = 100;
 const RTV_PER_STAR = 1.3; // 1 Star = $0.013
 
+// How long a viewer heartbeat (a play-endpoint poll) counts as "still watching"
+const VIEWER_PRESENCE_WINDOW_MS = 30_000;
+
+function sbConfigured(env) {
+  return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY);
+}
+
+async function sbFetch(env, pathAndQuery, options = {}) {
+  return fetch(`${env.SUPABASE_URL}/rest/v1/${pathAndQuery}`, {
+    ...options,
+    headers: {
+      'apikey': env.SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -78,6 +97,34 @@ export default {
       }
 
       const input = cfData.result;
+
+      // Best-effort: persist the stream row so play/tip endpoints have
+      // something to attach viewer presence and tip stats to. Cloudflare
+      // already created the live input, so a storage hiccup here shouldn't
+      // fail the whole request — surface it as a warning instead.
+      let storageWarning;
+      if (sbConfigured(env)) {
+        const insertRes = await sbFetch(env, 'live_streams', {
+          method: 'POST',
+          headers: { 'Prefer': 'return=minimal' },
+          body: JSON.stringify({
+            creator_id: creatorId,
+            title,
+            category,
+            cloudflare_stream_id: input.uid,
+            rtmp_url: input.rtmps?.url,
+            playback_url: input.webRTCPlayback?.url,
+            status: 'live',
+            started_at: new Date().toISOString()
+          })
+        }).catch((err) => ({ ok: false, statusText: err.message }));
+        if (!insertRes.ok) {
+          storageWarning = 'stream created on Cloudflare but failed to persist to live_streams — viewer_count/tips will not track for this stream';
+        }
+      } else {
+        storageWarning = 'SUPABASE_URL/SUPABASE_SERVICE_KEY not configured — viewer_count/tips will not track for this stream';
+      }
+
       return jsonResponse({
         success: true,
         stream_id: input.uid,
@@ -89,7 +136,8 @@ export default {
         category,
         creator_id: creatorId,
         status: 'ready',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        ...(storageWarning ? { storage_warning: storageWarning } : {})
       });
     }
 
@@ -126,6 +174,50 @@ export default {
       const connectionState = input.status?.current?.state || 'disconnected';
       const isLive = connectionState === 'connected' || connectionState === 'reconnected';
 
+      let viewerCount = 0;
+      let tipsTotalRtv = 0;
+      let tipCount = 0;
+
+      if (sbConfigured(env)) {
+        // Heartbeat: a viewer polling this endpoint counts as "still watching".
+        // Upsert on (stream_id, viewer_id) so repeated polls refresh last_seen_at
+        // instead of creating duplicate rows.
+        const viewerId = url.searchParams.get('viewer_id');
+        if (viewerId) {
+          await sbFetch(env, 'stream_viewers?on_conflict=stream_id,viewer_id', {
+            method: 'POST',
+            headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({
+              stream_id: streamId,
+              viewer_id: viewerId,
+              last_seen_at: new Date().toISOString()
+            })
+          }).catch(() => {});
+        }
+
+        const presenceCutoff = new Date(Date.now() - VIEWER_PRESENCE_WINDOW_MS).toISOString();
+        const viewerCountRes = await sbFetch(
+          env,
+          `stream_viewers?stream_id=eq.${encodeURIComponent(streamId)}&last_seen_at=gte.${encodeURIComponent(presenceCutoff)}&select=viewer_id`,
+          { headers: { 'Prefer': 'count=exact' } }
+        ).catch(() => null);
+        if (viewerCountRes?.ok) {
+          viewerCount = Number(viewerCountRes.headers.get('content-range')?.split('/')?.[1]) || 0;
+        }
+
+        const streamRowRes = await sbFetch(
+          env,
+          `live_streams?cloudflare_stream_id=eq.${encodeURIComponent(streamId)}&select=total_tips_rtv,tip_count`
+        ).catch(() => null);
+        if (streamRowRes?.ok) {
+          const [streamRow] = await streamRowRes.json().catch(() => []);
+          if (streamRow) {
+            tipsTotalRtv = Number(streamRow.total_tips_rtv) || 0;
+            tipCount = Number(streamRow.tip_count) || 0;
+          }
+        }
+      }
+
       return jsonResponse({
         success: true,
         stream_id: input.uid,
@@ -133,12 +225,10 @@ export default {
         connection_state: connectionState,
         whip_url: input.webRTC?.url,
         whep_url: input.webRTCPlayback?.url,
-        // Not backed by real data: this Worker has no KV/D1/Supabase binding
-        // to track concurrent viewers or a tip ledger. Wire that storage
-        // before treating these as anything but placeholders.
-        viewer_count: 0,
-        tips_total_rtv: 0,
-        tip_count: 0
+        viewer_count: viewerCount,
+        tips_total_rtv: tipsTotalRtv,
+        tip_count: tipCount,
+        ...(sbConfigured(env) ? {} : { storage_warning: 'SUPABASE_URL/SUPABASE_SERVICE_KEY not configured — viewer_count/tips are always 0' })
       });
     }
 
@@ -153,20 +243,79 @@ export default {
     // Tip system
     if (path === '/api/tip/send' && method === 'POST') {
       const body = await request.json();
+      const streamId = body.stream_id;
+      const senderId = body.sender_id;
+      const receiverId = body.receiver_id || body.creator_id;
+      if (!streamId || !senderId || !receiverId) {
+        return jsonResponse({ success: false, error: 'stream_id, sender_id, and receiver_id are required' }, 400);
+      }
+      if (!sbConfigured(env)) {
+        return jsonResponse({
+          success: false,
+          error: 'Tip storage is not configured on this Worker (missing SUPABASE_URL or SUPABASE_SERVICE_KEY secret)'
+        }, 500);
+      }
+
       const amount_usd = body.amount_usd || 0;
       const amount_rtv = Math.floor(amount_usd * RTV_PER_USD);
       const stars_amount = body.stars_amount || 0;
       const stars_rtv = Math.floor(stars_amount * RTV_PER_STAR);
       const total_rtv = amount_rtv + stars_rtv;
+      const combo_count = body.combo_count || 1;
+      const combo_multiplier = getComboMultiplier(combo_count);
 
       // 80/15/5 split
       const creator_share = Math.floor(total_rtv * 0.80);
       const platform_share = Math.floor(total_rtv * 0.15);
       const agency_share = total_rtv - creator_share - platform_share;
+      const creator_earn_rtv = creator_share + Math.floor(creator_share * combo_multiplier / 100);
+
+      const insertRes = await sbFetch(env, 'stream_tips', {
+        method: 'POST',
+        headers: { 'Prefer': 'return=representation' },
+        body: JSON.stringify({
+          stream_id: streamId,
+          sender_id: senderId,
+          receiver_id: receiverId,
+          gift_id: body.gift_id || null,
+          gift_name: body.gift_name || null,
+          gift_emoji: body.gift_emoji || null,
+          amount_rtv: total_rtv,
+          amount_usd,
+          creator_earn_rtv,
+          platform_fee_rtv: platform_share,
+          agency_fee_rtv: agency_share,
+          combo_count,
+          message: body.message || null,
+          is_anonymous: Boolean(body.is_anonymous),
+          status: 'completed'
+        })
+      });
+
+      if (!insertRes.ok) {
+        return jsonResponse({
+          success: false,
+          error: 'failed to record tip',
+          detail: await insertRes.text().catch(() => insertRes.statusText)
+        }, 502);
+      }
+
+      const [tipRow] = await insertRes.json().catch(() => []);
+
+      // Atomic counter update — a single UPDATE, not a JS read-modify-write,
+      // so concurrent tips on the same stream can't clobber each other.
+      const rpcRes = await sbFetch(env, 'rpc/increment_stream_tip_stats', {
+        method: 'POST',
+        body: JSON.stringify({
+          p_cloudflare_stream_id: streamId,
+          p_amount_rtv: total_rtv,
+          p_tipper_id: senderId
+        })
+      }).catch(() => ({ ok: false }));
 
       return jsonResponse({
         success: true,
-        tip_id: crypto.randomUUID(),
+        tip_id: tipRow?.id || null,
         amount_rtv: total_rtv,
         amount_usd: (total_rtv / RTV_PER_USD).toFixed(2),
         split: {
@@ -175,10 +324,11 @@ export default {
           agency: agency_share
         },
         payment_rail: body.rail || 'telegram_stars',
-        combo_count: body.combo_count || 1,
-        combo_multiplier: getComboMultiplier(body.combo_count || 1),
-        creator_earn_rtv: creator_share + Math.floor(creator_share * getComboMultiplier(body.combo_count || 1) / 100),
-        timestamp: new Date().toISOString()
+        combo_count,
+        combo_multiplier,
+        creator_earn_rtv,
+        timestamp: new Date().toISOString(),
+        ...(rpcRes.ok ? {} : { storage_warning: 'tip recorded but stream tip_count/total_tips_rtv counters failed to update' })
       });
     }
 
