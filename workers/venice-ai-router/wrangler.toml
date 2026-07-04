@@ -1,0 +1,17 @@
+# ============================================================
+# rotationtv-venice-ai-worker — Wrangler Config
+# ============================================================
+
+name = "rotationtv-venice-ai"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets (set via wrangler secret put):
+# VENICE_API_KEY
+# TELEGRAM_BOT_TOKEN
+# SUPABASE_URL
+# SUPABASE_SERVICE_KEY
