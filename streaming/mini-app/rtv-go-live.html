@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RotationTV — Go Live</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0A0A0A; color: #CCFF00; font-family: -apple-system, BlinkMacSystemFont, sans-serif; overflow: hidden; height: 100vh; }
+    #streamer-view { position: relative; width: 100%; height: 100vh; display: flex; flex-direction: column; }
+    #local-preview { width: 100%; flex: 1; object-fit: cover; transform: scaleX(-1); }
+    #go-live-btn { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: #CCFF00; color: #0A0A0A; border: none; padding: 18px 48px; font-size: 20px; font-weight: 800; border-radius: 50px; cursor: pointer; box-shadow: 0 0 30px rgba(204, 255, 0, 0.5); }
+    #go-live-btn.live { background: #FF0033; color: white; }
+    #live-indicator { position: absolute; top: 15px; left: 15px; display: none; align-items: center; gap: 6px; background: rgba(255, 0, 51, 0.9); color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+    #live-indicator.active { display: flex; }
+    #live-dot { width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    #viewer-count { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); color: #CCFF00; padding: 6px 14px; border-radius: 20px; font-size: 13px; display: none; }
+    #viewer-count.active { display: block; }
+    #stream-title { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 400px; background: rgba(0,0,0,0.7); border: 1px solid #CCFF00; color: white; padding: 12px 20px; border-radius: 25px; font-size: 16px; text-align: center; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="streamer-view">
+    <video id="local-preview" autoplay muted playsinline></video>
+    <div id="live-indicator"><div id="live-dot"></div><span>LIVE</span></div>
+    <div id="viewer-count">👁 0</div>
+    <input id="stream-title" placeholder="Stream title..." maxlength="50" />
+    <button id="go-live-btn">🔴 Go Live</button>
+  </div>
+  <script type="module">
+    import { WHIPClient } from '../webrtc/whip-client.js';
+    const tg = window.Telegram.WebApp; tg.expand(); tg.ready();
+    const user = tg.initDataUnsafe?.user;
+    const btn = document.getElementById('go-live-btn');
+    const video = document.getElementById('local-preview');
+    let whip = null, isLive = false, streamData = null;
+    btn.onclick = async () => {
+      if (isLive) {
+        if (whip) await whip.stop();
+        if (streamData) fetch(`https://rtv-stream.rotationtvaicom.workers.dev/api/stream/end/${streamData.stream_id}`, { method: 'POST' }).catch(() => {});
+        isLive = false; btn.textContent = '🔴 Go Live'; btn.classList.remove('live');
+        document.getElementById('live-indicator').classList.remove('active');
+        document.getElementById('viewer-count').classList.remove('active');
+      } else {
+        try {
+          const r = await fetch('https://rtv-stream.rotationtvaicom.workers.dev/api/stream/create', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ telegram_id: user?.id || 'unknown', title: document.getElementById('stream-title').value || 'Live Stream' })
+          });
+          streamData = await r.json();
+          if (!streamData.success) throw new Error(streamData.error);
+          whip = new WHIPClient(streamData.whip_url, video);
+          await whip.start();
+          isLive = true; btn.textContent = '⏹️ End Stream'; btn.classList.add('live');
+          document.getElementById('live-indicator').classList.add('active');
+          document.getElementById('viewer-count').classList.add('active');
+          tg.HapticFeedback?.notificationOccurred('success');
+        } catch (e) { tg.showAlert?.(`Failed: ${e.message}`); }
+      }
+    };
+    tg.onEvent('close', () => { if (isLive && whip) whip.stop(); });
+  </script>
+</body>
+</html>
