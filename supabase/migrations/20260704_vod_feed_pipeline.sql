@@ -10,7 +10,7 @@
 
 CREATE TABLE IF NOT EXISTS public.vod_library (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  creator_id TEXT NOT NULL REFERENCES public.rtv_users(id),
+  creator_id TEXT NOT NULL REFERENCES public."RtvUser"(id),
   title TEXT NOT NULL,
   description TEXT,
   category TEXT NOT NULL DEFAULT 'talk'
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS public.vod_library (
   -- Source tracking
   source_type TEXT NOT NULL DEFAULT 'live_recording'
     CHECK (source_type IN ('live_recording','upload','ai_generated','clip','highlight','short')),
-  source_stream_id UUID REFERENCES public.live_streams(id),
+  source_stream_id UUID REFERENCES public."LiveStream"(id),
 
   -- AI content pipeline
   ai_summary TEXT,                    -- Auto-generated summary
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS public.vod_library (
 
 CREATE TABLE IF NOT EXISTS public.feed_algorithm (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT NOT NULL REFERENCES public.rtv_users(id),
+  user_id TEXT NOT NULL REFERENCES public."RtvUser"(id),
 
   -- User preferences (learned + explicit)
   preferred_categories TEXT[] DEFAULT '{}',
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS public.feed_algorithm (
 
 CREATE TABLE IF NOT EXISTS public.feed_interactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT NOT NULL REFERENCES public.rtv_users(id),
+  user_id TEXT NOT NULL REFERENCES public."RtvUser"(id),
   vod_id UUID NOT NULL REFERENCES public.vod_library(id),
 
   action TEXT NOT NULL CHECK (action IN ('impression','view','watch_25','watch_50','watch_75','watch_100','like','dislike','share','save','comment','skip','click_thumbnail','click_creator')),
@@ -117,12 +117,12 @@ CREATE TABLE IF NOT EXISTS public.feed_interactions (
 
 CREATE TABLE IF NOT EXISTS public.ai_content_queue (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  creator_id TEXT NOT NULL REFERENCES public.rtv_users(id),
+  creator_id TEXT NOT NULL REFERENCES public."RtvUser"(id),
 
   -- What to generate
   job_type TEXT NOT NULL CHECK (job_type IN ('summarize','transcribe','chapters','mood_detect','clip_extract','highlight_reel','thumbnail_generate','short_form','translate','moderate')),
   source_vod_id UUID REFERENCES public.vod_library(id),
-  source_stream_id UUID REFERENCES public.live_streams(id),
+  source_stream_id UUID REFERENCES public."LiveStream"(id),
 
   -- Config
   config JSONB DEFAULT '{}',         -- Job-specific params
@@ -155,7 +155,7 @@ CREATE TABLE IF NOT EXISTS public.ai_content_queue (
 CREATE TABLE IF NOT EXISTS public.vod_comments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vod_id UUID NOT NULL REFERENCES public.vod_library(id),
-  user_id TEXT NOT NULL REFERENCES public.rtv_users(id),
+  user_id TEXT NOT NULL REFERENCES public."RtvUser"(id),
   parent_id UUID REFERENCES public.vod_comments(id),
 
   content TEXT NOT NULL CHECK (char_length(content) <= 2000),
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS public.vod_comments (
 
 CREATE TABLE IF NOT EXISTS public.vod_playlists (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  creator_id TEXT REFERENCES public.rtv_users(id),
+  creator_id TEXT REFERENCES public."RtvUser"(id),
   title TEXT NOT NULL,
   description TEXT,
   cover_url TEXT,
