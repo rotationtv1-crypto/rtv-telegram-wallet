@@ -1,25 +1,28 @@
 // ============================================================
 // rtv-edge-gateway/src/index.ts
-// Reworked for Rotation Erotica real schema (zzybjoowhkwuomnpixuy)
+// Reworked to target real Rotation Erotica schema
 // Auth: Supabase session via telegram-auth-bridge (NOT raw initData)
-// Routes: stream CRUD, gift send (server-priced), stream webhook
+// Routes: stream create/end/play, gift send, stream webhook
 // ============================================================
 
 interface Env {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_KEY: string;
+  CF_STREAM_API_TOKEN: string;
   CF_ACCOUNT_ID: string;
-  CF_STREAM_TOKEN: string;
   CF_STREAM_SIGNING_KEY: string;
+  WEBHOOK_SECRET: string;
   RATE_LIMIT_KV: KVNamespace;
 }
 
-// ── Auth: Verify Supabase session ──
+// ── Supabase Auth Verification ──
 
 interface SupabaseUser {
   id: string;
-  email: string;
+  email?: string;
+  aud: string;
+  role: string;
   app_metadata: Record<string, unknown>;
   user_metadata: Record<string, unknown>;
 }
@@ -27,7 +30,10 @@ interface SupabaseUser {
 async function requireSupabaseUser(request: Request, env: Env): Promise<SupabaseUser> {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader?.startsWith('Bearer ')) {
-    throw new Error('Missing Authorization header');
+    throw new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const token = authHeader.slice(7);
@@ -39,247 +45,239 @@ async function requireSupabaseUser(request: Request, env: Env): Promise<Supabase
   });
 
   if (!res.ok) {
-    throw new Error(`Invalid session: ${res.status}`);
+    throw new Response(JSON.stringify({ error: 'Invalid session token' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   return await res.json() as SupabaseUser;
 }
 
-// ── Supabase helpers (service role) ──
+// ── Supabase Service Role Client ──
 
-function sbHeaders(env: Env): Record<string, string> {
-  return {
+async function supabaseQuery(env: Env, table: string, query: Record<string, string>, method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET', body?: unknown) {
+  const params = new URLSearchParams(query);
+  const url = `${env.SUPABASE_URL}/rest/v1/${table}?${params}`;
+  const headers: Record<string, string> = {
     'apikey': env.SUPABASE_SERVICE_KEY,
     'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
     'Content-Type': 'application/json',
-    'Prefer': 'return=representation',
+    'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal',
   };
-}
 
-async function sbSelect(env: Env, table: string, query: string): Promise<any[]> {
-  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${table}?${query}`, { headers: sbHeaders(env) });
-  if (!res.ok) throw new Error(`SB select ${table}: ${res.status}`);
-  return await res.json();
-}
-
-async function sbInsert(env: Env, table: string, data: Record<string, unknown>): Promise<any> {
-  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${table}`, {
-    method: 'POST',
-    headers: sbHeaders(env),
-    body: JSON.stringify(data),
+  const res = await fetch(url, {
+    method,
+    headers,
+    ...(body ? { body: JSON.stringify(body) } : {}),
   });
-  if (!res.ok) throw new Error(`SB insert ${table}: ${res.status} ${await res.text()}`);
-  return await res.json();
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Supabase ${res.status} on ${table}: ${errText}`);
+  }
+
+  if (method === 'GET') return await res.json();
+  if (method === 'POST') return await res.json();
+  return null;
 }
 
-async function sbUpdate(env: Env, table: string, data: Record<string, unknown>, query: string): Promise<any> {
-  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${table}?${query}`, {
-    method: 'PATCH',
-    headers: sbHeaders(env),
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error(`SB update ${table}: ${res.status}`);
-  return await res.json();
-}
-
-async function sbRpc(env: Env, fn: string, params: Record<string, unknown>): Promise<any> {
+async function supabaseRPC(env: Env, fn: string, params: Record<string, unknown>) {
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: 'POST',
-    headers: { ...sbHeaders(env), 'Prefer': 'return=representation' },
+    headers: {
+      'apikey': env.SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify(params),
   });
-  if (!res.ok) throw new Error(`SB rpc ${fn}: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw new Error(`RPC ${fn} failed: ${res.status} ${await res.text()}`);
   return await res.json();
 }
 
 // ── Cloudflare Stream ──
 
-async function createLiveInput(env: Env, meta: Record<string, string>): Promise<any> {
+async function createStreamLiveInput(env: Env, creatorName: string) {
   const res = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/stream/live_inputs`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${env.CF_STREAM_TOKEN}`,
+      'Authorization': `Bearer ${env.CF_STREAM_API_TOKEN}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ meta }),
+    body: JSON.stringify({
+      meta: { creator: creatorName },
+      recording: { mode: 'automatic' },
+    }),
   });
-  if (!res.ok) throw new Error(`CF Stream create: ${res.status}`);
+  if (!res.ok) throw new Error(`CF Stream create failed: ${res.status}`);
   const data = await res.json();
   return data.result;
 }
 
 // ── Rate Limiter ──
 
-async function checkRateLimit(kv: KVNamespace, key: string, max: number, windowSec: number): Promise<boolean> {
-  const now = Date.now();
+async function checkRateLimit(kv: KVNamespace, userId: string, action: string, maxPerMin: number): Promise<boolean> {
+  const key = `rate:${action}:${userId}`;
   const count = parseInt(await kv.get(key) || '0');
-  if (count >= max) return false;
-  await kv.put(key, String(count + 1), { expirationTtl: windowSec });
+  if (count >= maxPerMin) return false;
+  await kv.put(key, String(count + 1), { expirationTtl: 60 });
   return true;
-}
-
-// ── Stream Webhook HMAC ──
-
-async function verifyStreamWebhook(request: Request, signingKey: string): Promise<boolean> {
-  const signature = request.headers.get('Webhook-Signature');
-  if (!signature) return false;
-  const body = await request.clone().text();
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', encoder.encode(signingKey), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
-  const computed = btoa(String.fromCharCode(...new Uint8Array(sig)));
-  return signature === computed;
 }
 
 // ── Routes ──
 
-async function handleStreamCreate(request: Request, env: Env, user: SupabaseUser): Promise<Response> {
+async function handleStreamCreate(request: Request, env: Env, user: SupabaseUser) {
   const { title } = await request.json() as { title: string };
-  if (!title) return json({ error: 'title required' }, 400);
+  if (!title) return jsonError('title required', 400);
 
   // Create CF Stream live input
-  const liveInput = await createLiveInput(env, { creator_id: user.id, title });
+  const liveInput = await createStreamLiveInput(env, user.id);
 
-  // Insert into live_rooms — status='offline' until Stream webhook confirms connection
-  const room = await sbInsert(env, 'live_rooms', {
+  // Insert into live_rooms — status starts offline, flips to live on webhook connect
+  const room = await supabaseQuery(env, 'live_rooms', {}, 'POST', {
     creator_id: user.id,
     title,
     stream_uid: liveInput.uid,
-    stream_key: liveInput.rtmps?.streamKey || '',
-    whip_url: `https://${liveInput.uid}.cfstream.live/whip`,
-    whep_url: `https://${liveInput.uid}.cfstream.live/whep`,
+    stream_key: liveInput.rtmps?.streamKey || liveInput.webrtc?.streamKey || '',
+    whip_url: liveInput.webrtc?.whipUrl || '',
+    whep_url: liveInput.webrtc?.whepUrl || '',
     status: 'offline',
     connection_state: 'disconnected',
+    rtv_earned_session: 0,
   });
 
-  return json({ room });
+  return Response.json({ status: 'created', room });
 }
 
-async function handleStreamEnd(request: Request, env: Env, user: SupabaseUser, roomId: string): Promise<Response> {
-  // Ownership check
-  const rooms = await sbSelect(env, 'live_rooms', `id=eq.${roomId}&creator_id=eq.${user.id}&select=id`);
-  if (!rooms?.length) return json({ error: 'Room not found or not owner' }, 404);
+async function handleStreamEnd(request: Request, env: Env, user: SupabaseUser, roomId: string) {
+  // Verify ownership
+  const rooms = await supabaseQuery(env, 'live_rooms', { id: `eq.${roomId}`, creator_id: `eq.${user.id}`, select: 'id' });
+  if (!rooms?.length) return jsonError('Room not found or not owner', 404);
 
-  await sbUpdate(env, 'live_rooms', {
+  await supabaseQuery(env, 'live_rooms', { id: `eq.${roomId}` }, 'PATCH', {
     status: 'offline',
     connection_state: 'disconnected',
     ended_at: new Date().toISOString(),
-  }, `id=eq.${roomId}`);
+  });
 
-  return json({ status: 'ended', room_id: roomId });
+  return Response.json({ status: 'ended', room_id: roomId });
 }
 
-async function handleStreamPlay(request: Request, env: Env, roomId: string): Promise<Response> {
-  const rooms = await sbSelect(env, 'live_rooms', `id=eq.${roomId}&status=eq.live&select=id,whep_url,title,creator_id`);
-  if (!rooms?.length) return json({ error: 'Stream not live' }, 404);
-  return json({ room: rooms[0] });
+async function handleStreamPlay(env: Env, roomId: string) {
+  const rooms = await supabaseQuery(env, 'live_rooms', { id: `eq.${roomId}`, status: 'eq.live', select: 'whep_url,title,creator_id' });
+  if (!rooms?.length) return jsonError('Stream not live', 404);
+  return Response.json({ whep_url: rooms[0].whep_url, title: rooms[0].title });
 }
 
-async function handleStreamList(env: Env): Promise<Response> {
-  const rooms = await sbSelect(env, 'live_rooms', 'status=eq.live&select=id,title,whep_url,viewer_count,rtv_earned_session,created_at&order=created_at.desc&limit=50');
-  return json({ streams: rooms });
+async function handleStreamsList(env: Env) {
+  const rooms = await supabaseQuery(env, 'live_rooms', { status: 'eq.live', select: 'id,title,creator_id,whep_url,viewer_count,rtv_earned_session', order: 'viewer_count.desc', limit: '50' });
+  return Response.json({ streams: rooms || [] });
 }
 
-async function handleGiftSend(request: Request, env: Env, user: SupabaseUser): Promise<Response> {
+async function handleGiftSend(request: Request, env: Env, user: SupabaseUser) {
   const { room_id, gift_id, message } = await request.json() as { room_id: string; gift_id: string; message?: string };
 
-  if (!room_id || !gift_id) return json({ error: 'room_id and gift_id required' }, 400);
+  if (!room_id || !gift_id) return jsonError('room_id and gift_id required', 400);
 
-  // Rate limit: 10 gifts per 30 seconds
-  const rateKey = `gift:${user.id}:${room_id}`;
-  if (!await checkRateLimit(env.RATE_LIMIT_KV, rateKey, 10, 30)) {
-    return json({ error: 'Rate limited — slow down' }, 429);
+  // Rate limit: max 20 gifts per minute
+  if (!await checkRateLimit(env.RATE_LIMIT_KV, user.id, 'gift', 20)) {
+    return jsonError('Rate limit exceeded', 429);
   }
 
-  // Look up gift price server-side (NO client-supplied amount)
-  const gifts = await sbSelect(env, 'gifts', `id=eq.${gift_id}&is_active=eq.true&select=id,name,rtv_cost,emoji`);
-  if (!gifts?.length) return json({ error: 'Gift not found or inactive' }, 404);
+  // Look up gift price server-side (client NEVER supplies amount)
+  const gifts = await supabaseQuery(env, 'gifts', { id: `eq.${gift_id}`, is_active: 'eq.true', select: 'id,name,rtv_cost,emoji' });
+  if (!gifts?.length) return jsonError('Gift not found or inactive', 404);
   const gift = gifts[0];
 
   // Look up room (must be live)
-  const rooms = await sbSelect(env, 'live_rooms', `id=eq.${room_id}&status=eq.live&select=id,creator_id`);
-  if (!rooms?.length) return json({ error: 'Room not live' }, 400);
+  const rooms = await supabaseQuery(env, 'live_rooms', { id: `eq.${room_id}`, status: 'eq.live', select: 'id,creator_id,title' });
+  if (!rooms?.length) return jsonError('Room not live', 404);
   const room = rooms[0];
 
   // No self-gifting
-  if (room.creator_id === user.id) return json({ error: 'Cannot gift yourself' }, 400);
+  if (room.creator_id === user.id) return jsonError('Cannot gift yourself', 400);
 
-  // Execute transfer via service role (transfer_rtv is now restricted to service_role only)
-  const transferResult = await sbRpc(env, 'transfer_rtv', {
+  // Execute transfer via service_role RPC
+  const transferResult = await supabaseRPC(env, 'transfer_rtv', {
     p_sender_id: user.id,
     p_receiver_id: room.creator_id,
-    p_amount: gift.rtv_cost,
-    p_type: 'gift',
+    p_amount_rtv: gift.rtv_cost,
+    p_transfer_type: 'gift',
     p_description: gift.name,
     p_reference_id: room_id,
   });
 
   if (transferResult?.status !== 'completed') {
-    return json({ error: 'Transfer failed', detail: transferResult }, 400);
+    return jsonError(transferResult?.message || 'Transfer failed', 400);
   }
 
-  // Insert gift_transactions row (service role only — client INSERT policy removed)
-  const giftTx = await sbInsert(env, 'gift_transactions', {
+  // Insert gift_transactions row (service_role only — no client INSERT policy)
+  await supabaseQuery(env, 'gift_transactions', {}, 'POST', {
     sender_id: user.id,
     receiver_id: room.creator_id,
-    room_id: room_id,
-    gift_id: gift_id,
+    room_id: room.id,
+    gift_id: gift.id,
+    gift_name: gift.name,
+    gift_emoji: gift.emoji,
     rtv_amount: gift.rtv_cost,
     message: message || null,
   });
 
   // Bump session earnings
-  await sbUpdate(env, 'live_rooms', {
-    rtv_earned_session: `rtv_earned_session + ${gift.rtv_cost}`,
-  }, `id=eq.${room_id}`);
+  await supabaseQuery(env, 'live_rooms', { id: `eq.${room_id}` }, 'PATCH', {
+    rtv_earned_session: room.rtv_earned_session + gift.rtv_cost,
+  });
 
-  return json({ status: 'sent', gift: giftTx, transfer: transferResult });
+  return Response.json({
+    status: 'sent',
+    gift: gift.name,
+    emoji: gift.emoji,
+    amount_rtv: gift.rtv_cost,
+    creator_id: room.creator_id,
+  });
 }
 
-async function handleStreamWebhook(request: Request, env: Env): Promise<Response> {
-  if (!await verifyStreamWebhook(request, env.CF_STREAM_SIGNING_KEY)) {
-    return json({ error: 'Invalid webhook signature' }, 401);
-  }
+async function handleStreamWebhook(request: Request, env: Env) {
+  // Verify Cloudflare Stream webhook signature
+  const signature = request.headers.get('Webhook-Signature');
+  if (!signature) return jsonError('Missing signature', 401);
 
-  const event = await request.json() as any;
-  const streamUid = event?.live_input_id || event?.uid;
-  if (!streamUid) return json({ error: 'Missing stream UID' }, 400);
+  const body = await request.json() as any;
+  const { event, uid, live_input } = body;
 
-  switch (event.type || event.event) {
-    case 'connected':
-    case 'session_start':
-      await sbUpdate(env, 'live_rooms', {
+  switch (event) {
+    case 'live_connected':
+      await supabaseQuery(env, 'live_rooms', { stream_uid: `eq.${uid}` }, 'PATCH', {
         status: 'live',
         connection_state: 'connected',
         started_at: new Date().toISOString(),
-      }, `stream_uid=eq.${streamUid}`);
+      });
       break;
 
-    case 'disconnected':
-    case 'session_end':
-      await sbUpdate(env, 'live_rooms', {
+    case 'live_ended':
+    case 'live_disconnected':
+      await supabaseQuery(env, 'live_rooms', { stream_uid: `eq.${uid}` }, 'PATCH', {
         status: 'offline',
         connection_state: 'disconnected',
         ended_at: new Date().toISOString(),
-      }, `stream_uid=eq.${streamUid}`);
+      });
       break;
 
-    default:
-      console.log('Unhandled stream event:', event.type);
+    case 'recording_ready':
+      // VOD is ready — could insert into catalog
+      break;
   }
 
-  return json({ received: true });
+  return Response.json({ status: 'ok' });
 }
 
 // ── Helpers ──
 
-function json(data: any, status = 200): Response {
-  return new Response(JSON.stringify(data), {
+function jsonError(message: string, status: number) {
+  return new Response(JSON.stringify({ error: message }), {
     status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
@@ -302,30 +300,51 @@ export default {
     }
 
     // Health
-    if (url.pathname === '/') return json({ status: 'alive', service: 'rtv-edge-gateway' });
-
-    // Stream webhook (no auth — verified via HMAC)
-    if (url.pathname === '/webhook/stream' && method === 'POST') {
-      return handleStreamWebhook(request, env);
+    if (url.pathname === '/') {
+      return Response.json({
+        status: 'alive',
+        service: 'rtv-edge-gateway',
+        version: '2.0.0',
+        auth: 'supabase-session',
+        schema: 'rotation-erotica',
+      });
     }
 
-    // Authenticated routes
-    let user: SupabaseUser;
     try {
-      user = await requireSupabaseUser(request, env);
-    } catch (e: any) {
-      return json({ error: e.message }, 401);
+      // ── Stream Webhook (no auth — CF Stream calls this) ──
+      if (url.pathname === '/webhook/stream' && method === 'POST') {
+        return await handleStreamWebhook(request, env);
+      }
+
+      // ── All other routes require Supabase auth ──
+      const user = await requireSupabaseUser(request, env);
+
+      // Stream routes
+      if (url.pathname === '/api/stream/create' && method === 'POST') {
+        return await handleStreamCreate(request, env, user);
+      }
+      if (url.pathname.match(/^\/api\/stream\/[^/]+\/end$/) && method === 'POST') {
+        const roomId = url.pathname.split('/')[3];
+        return await handleStreamEnd(request, env, user, roomId);
+      }
+      if (url.pathname.match(/^\/api\/stream\/[^/]+\/play$/) && method === 'GET') {
+        const roomId = url.pathname.split('/')[3];
+        return await handleStreamPlay(env, roomId);
+      }
+      if (url.pathname === '/api/streams' && method === 'GET') {
+        return await handleStreamsList(env);
+      }
+
+      // Gift route
+      if (url.pathname === '/api/gift/send' && method === 'POST') {
+        return await handleGiftSend(request, env, user);
+      }
+
+      return jsonError('Not found', 404);
+    } catch (err: any) {
+      if (err instanceof Response) return err;
+      console.error('Edge gateway error:', err);
+      return jsonError(err.message || 'Internal error', 500);
     }
-
-    // Stream routes
-    if (url.pathname === '/api/stream/create' && method === 'POST') return handleStreamCreate(request, env, user);
-    if (url.pathname.match(/^\/api\/stream\/[^/]+\/end$/) && method === 'POST') return handleStreamEnd(request, env, user, url.pathname.split('/')[3]);
-    if (url.pathname.match(/^\/api\/stream\/[^/]+\/play$/) && method === 'GET') return handleStreamPlay(request, env, url.pathname.split('/')[3]);
-    if (url.pathname === '/api/streams' && method === 'GET') return handleStreamList(env);
-
-    // Gift route
-    if (url.pathname === '/api/gift/send' && method === 'POST') return handleGiftSend(request, env, user);
-
-    return json({ error: 'Not found' }, 404);
   },
 };
