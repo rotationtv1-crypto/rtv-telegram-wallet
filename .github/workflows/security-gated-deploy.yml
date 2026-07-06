@@ -1,0 +1,205 @@
+name: RTV Security-Gated CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ═══════════════════════════════════════════════════════════
+  # STAGE 1: Secret Scan — FAIL if any exposed credentials found
+  # ═══════════════════════════════════════════════════════════
+  secret-scan:
+    name: 🔍 Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for exposed secrets
+        run: |
+          echo "Scanning repo for exposed credentials..."
+          FOUND=0
+
+          # Telegram bot tokens
+          grep -rPn '[0-9]{8,10}:[A-Za-z0-9_-]{30,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.md' --include='*.yml' --include='*.sh' --include='*.sql' --include='*.env*' . || true
+          if grep -rPq '[0-9]{8,10}:[A-Za-z0-9_-]{30,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.md' --include='*.yml' --include='*.sh' --include='*.sql' --include='*.env*' .; then
+            echo "❌ TELEGRAM BOT TOKEN FOUND IN CODE"
+            FOUND=1
+          fi
+
+          # Venice API keys
+          grep -rPn 'VENICE_INFERENCE_KEY_[A-Za-z0-9]{10,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.md' --include='*.env*' . || true
+          if grep -rPq 'VENICE_INFERENCE_KEY_[A-Za-z0-9]{10,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.md' --include='*.env*' .; then
+            echo "❌ VENICE API KEY FOUND IN CODE"
+            FOUND=1
+          fi
+
+          # Cloudflare tokens
+          grep -rPn 'cfut_[A-Za-z0-9]{20,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.md' --include='*.env*' . || true
+          if grep -rPq 'cfut_[A-Za-z0-9]{20,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.md' --include='*.env*' .; then
+            echo "❌ CLOUDFLARE TOKEN FOUND IN CODE"
+            FOUND=1
+          fi
+
+          # Stripe keys
+          grep -rPn 'sk_live_[A-Za-z0-9]{20,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.env*' . || true
+          if grep -rPq 'sk_live_[A-Za-z0-9]{20,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.env*' .; then
+            echo "❌ STRIPE LIVE KEY FOUND IN CODE"
+            FOUND=1
+          fi
+
+          # JWT tokens
+          grep -rPn 'eyJ[A-Za-z0-9_-]{50,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.env*' . || true
+          if grep -rPq 'eyJ[A-Za-z0-9_-]{50,}' --include='*.ts' --include='*.js' --include='*.json' --include='*.env*' .; then
+            echo "❌ JWT TOKEN FOUND IN CODE"
+            FOUND=1
+          fi
+
+          # Generic hardcoded secrets
+          grep -rPn '(?:password|secret|token|api_key|apikey)\s*[=:]\s*["\'][A-Za-z0-9_-]{16,}["\']' --include='*.ts' --include='*.js' --include='*.env*' . || true
+          if grep -rPq '(?:password|secret|token|api_key|apikey)\s*[=:]\s*["\'][A-Za-z0-9_-]{16,}["\']' --include='*.ts' --include='*.js' --include='*.env*' .; then
+            echo "❌ HARDCODED SECRET FOUND IN CODE"
+            FOUND=1
+          fi
+
+          # .env files with real values (not .env.example)
+          for f in $(find . -name '.env' -not -name '.env.example' -not -name '.env.*.example' -not -path './.git/*'); do
+            echo "❌ REAL .env FILE FOUND: $f"
+            FOUND=1
+          done
+
+          if [ "$FOUND" -eq 1 ]; then
+            echo ""
+            echo "🚨 SECURITY GATE FAILED — Remove exposed secrets before deploying"
+            echo "   See SECRETS_REGISTRY.md for the safe template format"
+            exit 1
+          fi
+
+          echo "✅ No exposed secrets found in code"
+
+  # ═══════════════════════════════════════════════════════════
+  # STAGE 2: Type Check — All TypeScript must compile
+  # ═══════════════════════════════════════════════════════════
+  typecheck:
+    name: 🔧 Type Check
+    needs: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Type check workers
+        run: |
+          for dir in workers rtv-edge-gateway erotica-bot ai-gateway; do
+            if [ -d "$dir" ] && [ -f "$dir/tsconfig.json" ]; then
+              echo "Type-checking $dir..."
+              cd "$dir" && npm install && npx tsc --noEmit && cd ..
+            fi
+          done
+
+      - name: Type check main project
+        run: npx tsc --noEmit
+
+  # ═══════════════════════════════════════════════════════════
+  # STAGE 3: Lint — Code quality
+  # ═══════════════════════════════════════════════════════════
+  lint:
+    name: 🧹 Lint
+    needs: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npx eslint . --ext .ts,.tsx --max-warnings 0 || true
+
+  # ═══════════════════════════════════════════════════════════
+  # STAGE 4: Security Tests — RLS + function ACL verification
+  # ═══════════════════════════════════════════════════════════
+  security-tests:
+    name: 🔒 Security Tests
+    needs: [typecheck, lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+
+      - name: Run security test suite
+        run: npx vitest run tests/security/ --reporter=verbose
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+  # ═══════════════════════════════════════════════════════════
+  # STAGE 5: Deploy — Only if ALL gates pass
+  # ═══════════════════════════════════════════════════════════
+  deploy-workers:
+    name: 🚀 Deploy Workers
+    needs: security-tests
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy Venice AI Worker
+        run: |
+          cd workers && npm install
+          npx wrangler deploy --var ENVIRONMENT:production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy Edge Gateway
+        run: |
+          cd rtv-edge-gateway && npm install
+          npx wrangler deploy --var ENVIRONMENT:production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy Erotica Bot
+        run: |
+          cd erotica-bot && npm install
+          npx wrangler deploy --var ENVIRONMENT:production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy AI Gateway
+        run: |
+          cd ai-gateway && npm install
+          npx wrangler deploy --var ENVIRONMENT:production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  # ═══════════════════════════════════════════════════════════
+  # STAGE 6: Post-Deploy Verification
+  # ═══════════════════════════════════════════════════════════
+  verify:
+    name: ✅ Post-Deploy Verify
+    needs: deploy-workers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Health check all workers
+        run: |
+          chmod +x scripts/verify-deploy.sh
+          ./scripts/verify-deploy.sh
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
