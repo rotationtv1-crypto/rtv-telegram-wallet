@@ -1,10 +1,97 @@
+// ROTATIONTVNETWORK LLC -- Wrangler Config v6.0.0
+// Presidential Authority: Darrel | Rotationtvnetwork LLC | 2026
+// Deploy: npx wrangler deploy
 {
-  // RTV Root Wrangler Config — Shared Settings
-  // Individual workers have their own wrangler.jsonc with specific names/routes
-  "compatibility_date": "2024-09-01",
+  "name": "rotationtv-live-ai-clones",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-02-07",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1
-  }
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+
+  // --- Durable Objects ---
+  "durable_objects": {
+    "bindings": [
+      { "name": "STREAM_ROOM",      "class_name": "StreamRoom" },
+      { "name": "RTV_STREAM_AGENT", "class_name": "RTVStreamAgent" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["StreamRoom"] },
+    { "tag": "v2", "new_sqlite_classes": ["RTVStreamAgent"] }
+  ],
+
+  // --- Workflows ---
+  "workflows": [
+    {
+      "name": "creator-payout-workflow",
+      "binding": "CREATOR_PAYOUT_WORKFLOW",
+      "class_name": "CreatorPayoutWorkflow"
+    }
+  ],
+
+  // --- Queues ---
+  "queues": {
+    "producers": [
+      { "queue": "tip-queue", "binding": "TIP_QUEUE" }
+    ],
+    "consumers": [
+      {
+        "queue": "tip-queue",
+        "dead_letter_queue": "tip-queue-dlq",
+        "retry_delay": 300,
+        "max_retries": 3
+      }
+    ]
+  },
+
+  // --- Analytics Engine ---
+  // Analytics Engine: enable at https://dash.cloudflare.com/947b01a53876bee16fa0e8360c880aca/workers/analytics-engine
+  // "analytics_engine_datasets": [
+  // { "binding": "STREAM_ANALYTICS", "dataset": "rtv_stream_events" }
+  // ],
+
+  // --- Browser Rendering ---
+  // "browser": { "binding": "BROWSER_RENDERING" },
+
+  // --- R2 Storage ---
+  // R2: enable at dash.cloudflare.com/947b01a53876bee16fa0e8360c880aca/r2
+  // "r2_buckets": [
+  // { "binding": "ASSETS_BUCKET", "bucket_name": "rtv-assets" }
+  // ],
+
+  // --- KV Namespaces ---
+  // KV_SPEND: rate limiting + daily spend tracking (circuit breaker)
+  // Create with: npx wrangler kv:namespace create "KV_SPEND"
+  // Then add the returned id below
+  "kv_namespaces": [
+    {
+      "binding": "KV_SPEND",
+      "id": "3542f381a0d143318f9061d32661a509",
+      "preview_id": "8239c2789892466c9d92be6fec589453"
+    }
+  ],
+
+  // --- Static Assets (SPA) ---
+  "assets": {
+    "directory": "dist",
+    "not_found_handling": "single-page-application",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+
+  // --- Public Config Vars (non-sensitive) ---
+  // Secrets (KIMI_API_KEY, VENICE_API_KEY, OPENAI_API_KEY, etc.)
+  // are injected via: npx wrangler secret put SECRET_NAME
+  "vars": {
+    "MODEL": "gpt-4o-mini",
+    "PAYOUT_ENGINE_URL": "https://app.base44.com/api/apps/69db6144f66afe8317b2d0d7/functions/rtvPayoutEngine",
+    "API_BASE": "https://app.base44.com/api/apps/69db6144f66afe8317b2d0d7",
+    "SUPABASE_URL": "https://xynkgaxfwvpcixissxdz.supabase.co"
+  },
+
+  // --- Routes (Custom Domains) ---
+  // Uncomment when custom domains are configured in Cloudflare DNS
+  // "routes": [
+  //   { "pattern": "api.rotationtv.network/*", "zone_name": "rotationtv.network" }
+  // ]
 }
