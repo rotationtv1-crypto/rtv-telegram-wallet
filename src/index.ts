@@ -187,6 +187,10 @@ function getIP(request: Request): string {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    // Initialize bot registry from environment
+    const { initBotRegistry } = await import("./lib/botGateway");
+    initBotRegistry(env as any);
+
     const { pathname } = url;
 
     // ── CORS preflight ──────────────────────────────────────────────────────
@@ -819,6 +823,152 @@ export default {
 
       return json({ error: "Admin route not found" }, 404);
     }
+
+
+    // ── TELEGRAM APP ORCHESTRATOR ────────────────────────────────────────────
+    
+    // Bot registration
+    if (pathname === "/api/bots/register" && request.method === "POST") {
+      try {
+        const body = await request.json() as any;
+        if (!body.botToken || !body.botName) return json({ error: "Missing botToken or botName" }, 400);
+        const { registerBot, setBotWebhook, setWebAppMenuButton } = await import("./lib/telegramCloudSdk");
+        const botId = body.botId || `bot_${Date.now()}`;
+        const webAppUrl = body.webAppUrl || "https://rotationtv-mini-app.pages.dev";
+        registerBot({ botId, botToken: body.botToken, botName: body.botName, webAppUrl });
+        const webhookUrl = `https://rotationtv-live-ai-clones.rotationtimmy.workers.dev/telegram/bot/${botId}/webhook`;
+        await setBotWebhook(botId, webhookUrl);
+        if (body.menuButtonText) await setWebAppMenuButton(botId, body.menuButtonText, webAppUrl);
+        return json({ ok: true, botId, webhookUrl, webAppUrl });
+      } catch (e: any) { return json({ error: e.message }, 500); }
+    }
+
+    // List all registered bots
+    if (pathname === "/api/bots/list" && request.method === "GET") {
+      const { getAllBots } = await import("./lib/botGateway");
+      const bots = getAllBots().map(b => ({ botId: b.botId, botName: b.botName, webAppUrl: b.webAppUrl, hasToken: b.botToken.length > 0 }));
+      return json({ bots, count: bots.length });
+    }
+
+    // Get bot webhook info
+    if (pathname.startsWith("/api/bots/") && pathname.endsWith("/webhook-info") && request.method === "GET") {
+      const botId = pathname.split("/")[3];
+      const { getWebhookInfo } = await import("./lib/telegramCloudSdk");
+      try { const info = await getWebhookInfo(botId); return json({ ok: true, info }); }
+      catch (e: any) { return json({ error: e.message }, 500); }
+    }
+
+    // WebApp Sync — version check
+    if (pathname === "/api/webapp/sync" && request.method === "GET") {
+      const clientVersion = url.searchParams.get("version") || "0.0.0";
+      const { checkVersionSync } = await import("./lib/webappSyncEngine");
+      if (!env.KV_SPEND) return json({ version: "0.0.0", upToDate: true });
+      const latest = await checkVersionSync(env.KV_SPEND, clientVersion);
+      return json({ upToDate: !latest, version: latest?.version || clientVersion, latest: latest || null });
+    }
+
+    // WebApp Sync — publish new version
+    if (pathname === "/api/webapp/publish" && request.method === "POST") {
+      const signingSecret = env.REQUEST_SIGNING_SECRET;
+      if (!signingSecret) return json({ error: "No signing secret configured" }, 503);
+      try {
+        const body = await request.json() as any;
+        const { publishVersion } = await import("./lib/webappSyncEngine");
+        if (!env.KV_SPEND) return json({ error: "KV not bound" }, 503);
+        await publishVersion(env.KV_SPEND, {
+          version: body.version, deployedAt: new Date().toISOString(),
+          bundleHash: body.bundleHash || "", assetManifest: body.assetManifest || {},
+          featureFlags: body.featureFlags || {},
+        });
+        return json({ ok: true, version: body.version });
+      } catch (e: any) { return json({ error: e.message }, 500); }
+    }
+
+    // WebApp config endpoint
+    if (pathname === "/api/webapp/config" && request.method === "GET") {
+      const botId = url.searchParams.get("botId") || "main";
+      const { generateConfig } = await import("./lib/webappSyncEngine");
+      if (!env.KV_SPEND) return json({ version: "0.0.0", featureFlags: {}, botId });
+      const config = await generateConfig(env.KV_SPEND, botId);
+      return json(config);
+    }
+
+    // Feature flag update
+    if (pathname === "/api/webapp/feature-flag" && request.method === "POST") {
+      try {
+        const body = await request.json() as any;
+        const { setFeatureFlag } = await import("./lib/webappSyncEngine");
+        if (!env.KV_SPEND) return json({ error: "KV not bound" }, 503);
+        await setFeatureFlag(env.KV_SPEND, body.flag, body.enabled);
+        return json({ ok: true, flag: body.flag, enabled: body.enabled });
+      } catch (e: any) { return json({ error: e.message }, 500); }
+    }
+
+    // ── STANDALONE WEB AUTH ──────────────────────────────────────────────────
+    
+    if (pathname === "/api/web/auth" && request.method === "POST") {
+      try {
+        const body = await request.json() as any;
+        const { authenticateWebUser } = await import("./lib/webAuth");
+        const botToken = env.TELEGRAM_BOT_TOKEN_6 || env.TELEGRAM_BOT_TOKEN_MAIN || "";
+        const jwtSecret = env.REQUEST_SIGNING_SECRET || "rtv-fallback-secret";
+        const result = await authenticateWebUser(body.initData, botToken, jwtSecret, "main");
+        if ("error" in result) return json({ error: result.error }, 401);
+        return json({ jwt: result.jwt, user: result.user });
+      } catch (e: any) { return json({ error: e.message }, 500); }
+    }
+
+    if (pathname === "/api/web/verify" && request.method === "GET") {
+      const { verifyWebAuth } = await import("./lib/webAuth");
+      const jwtSecret = env.REQUEST_SIGNING_SECRET || "rtv-fallback-secret";
+      const payload = await verifyWebAuth(request.headers.get("Authorization"), jwtSecret);
+      if (!payload) return json({ valid: false }, 401);
+      return json({ valid: true, user: { id: payload.userId, username: payload.username, firstName: payload.firstName, lastName: payload.lastName } });
+    }
+
+    // ── TELEGRAM CLOUD SDK PROXY ─────────────────────────────────────────────
+    
+    if (pathname.startsWith("/api/cloud-sdk/") && request.method === "POST") {
+      try {
+        const parts = pathname.split("/");
+        const botId = parts[3]; const method = parts[4];
+        if (!botId || !method) return json({ error: "Missing botId or method" }, 400);
+        const { invokeMethod } = await import("./lib/telegramCloudSdk");
+        const body = await request.json().catch(() => ({}));
+        const result = await invokeMethod(botId, method, body);
+        return json({ ok: true, result });
+      } catch (e: any) { return json({ error: e.message }, 500); }
+    }
+
+    // ── DYNAMIC BOT WEBHOOK ROUTING ───────────────────────────────────────────
+    
+    if (pathname.startsWith("/telegram/bot/") && pathname.endsWith("/webhook")) {
+      const { resolveBot } = await import("./lib/botGateway");
+      const botConfig = resolveBot(pathname);
+      if (!botConfig || !botConfig.botToken) return json({ error: "Bot not registered" }, 404);
+      const body = await request.json().catch(() => ({}));
+      if (body.update_id === undefined) return json({ error: "Invalid update" }, 400);
+      const handlerModule = await import("./lib/telegramHandler");
+      const message = body.message || body.callback_query?.message || body.edited_message;
+      if (message) await handlerModule.handleTelegramMessage(message, env, botConfig.botToken, botConfig.isErotica || false);
+      if (body.pre_checkout_query) {
+        const { answerPreCheckoutQuery } = await import("./lib/telegramCloudSdk");
+        await answerPreCheckoutQuery(botConfig.botId, body.pre_checkout_query.id, true);
+      }
+      if (body.message?.successful_payment) {
+        await logSIEMEvent({ level: "info", event: "stars_payment_received", actor: String(body.message.from?.id || "unknown"), resource: botConfig.botId, data: { stars: body.message.successful_payment.total_amount, currency: body.message.successful_payment.currency } }, env);
+      }
+      return json({ ok: true });
+    }
+
+    // ── ORCHESTRATOR HEALTH ──────────────────────────────────────────────────
+    
+    if (pathname === "/api/orchestrator/health" && request.method === "GET") {
+      const { getAllBots } = await import("./lib/botGateway");
+      const bots = getAllBots();
+      return json({ status: "operational", bots: bots.length, botDetails: bots.map(b => ({ id: b.botId, name: b.botName, hasToken: b.botToken.length > 0 })), webAppUrl: "https://rotationtv-mini-app.pages.dev", version: "7.0.0", entity: "Darrel-spell-living-trust", features: { multiBot: true, webAppSync: true, standaloneWeb: true, cloudSdkProxy: true, starsPayments: true, dynamicBotRegistration: true } });
+    }
+
 
     // ── Static assets (SPA fallback) ─────────────────────────────────────────
     return env.ASSETS.fetch(request);
