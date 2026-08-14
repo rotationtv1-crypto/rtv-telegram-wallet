@@ -65,7 +65,7 @@ export async function rtvPaymentHub(req: any, env: any) {
   }
   
   // ── Purged actions ──
-  if (action === 'buy_rtv' || action === 'stripe_checkout' || action === 'paypal') {
+  if (action === 'buy_rtv' /* purged */ || action === 'stripe_checkout' || action === 'paypal') {
     return { error: 'Purged. Telegram native payments only (Stars + USDT).', code: 410, entity: 'Darrel-spell-living-trust' };
   }
   
