@@ -57,7 +57,7 @@ export default {
         status: 'live',
         playback_url: `https://watch.cloudflarestream.com/${streamId}`,
         viewer_count: Math.floor(Math.random() * 1000) + 50,
-        tips_total_rtv: 0,
+        tips_total_stars: 0,
         tip_count: 0
       });
     }
@@ -76,19 +76,18 @@ export default {
       const amount_usd = body.amount_usd || 0;
       const amount_stars = Math.floor(amount_usd / 0.013) // Stars at $0.013 each;
       const stars_amount = body.stars_amount || 0;
-      const stars_rtv = Math.floor(stars_amount * RTV_PER_STAR);
+      const  = Math.floor(stars_amount * RTV_PER_STAR);
       const total_stars = amount_stars // Stars only, no RTV conversion;
 
       // 80/15/5 split
-      const creator_share = Math.floor(total_rtv * 0.80);
-      const platform_share = Math.floor(total_rtv * 0.15);
-      const agency_share = total_rtv - creator_share - platform_share;
+      const creator_share = Math.floor(total_stars * 0.80);
+      const platform_share = Math.floor(total_stars * 0.15);
+      const agency_share = total_stars - creator_share - platform_share;
 
       return jsonResponse({
         success: true,
         tip_id: crypto.randomUUID(),
         stars: total_stars,
-        amount_usd: (total_rtv / RTV_PER_USD).toFixed(2),
         split: {
           creator: creator_share,
           platform: platform_share,
@@ -150,7 +149,6 @@ export default {
         success: true,
         ccbill_url: `https://ccbill.com/cgi-bin/ccbill/jsecure/payment.cgi?amount=${body.amount_usd || 10}&product=rtv-erotica`,
         amount_usd: body.amount_usd || 10,
-        stars: Math.floor((body.amount_usd || 10) * RTV_PER_USD),
         rail: 'ccbill',
         note: 'CCBill is the approved adult-content processor for Rotation Erotica only'
       });
@@ -164,7 +162,6 @@ export default {
         tribute_session_id: crypto.randomUUID(),
         creator_id: body.creator_id,
         amount_usd: body.amount_usd || 5,
-        stars: Math.floor((body.amount_usd || 5) * RTV_PER_USD),
         rail: 'tribute',
         note: 'Tribute API — adult-content compliant creator tipping'
       });
@@ -195,7 +192,6 @@ export default {
       const body = await request.json();
       const ton_amount = body.ton_amount || 1;
       const usd_value = ton_amount * 1.5; // approximate TON/USD
-      const rtv = Math.floor(usd_value * RTV_PER_USD);
       return jsonResponse({
         success: true,
         ton_amount: ton_amount,
@@ -210,7 +206,6 @@ export default {
     if (path === '/api/payout/request' && method === 'POST') {
       const body = await request.json();
       const stars = body.amount_stars || 1000;
-      const usd = (rtv / RTV_PER_USD).toFixed(2);
       return jsonResponse({
         success: true,
         payout_id: crypto.randomUUID(),
