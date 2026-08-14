@@ -9,7 +9,7 @@
     "head_sampling_rate": 1
   },
   "vars": {
-    "RTV_VERSION": "3.0.0",
+    "RTV_VERSION": "4.0.0",
     "RTV_ENV": "production"
   }
 }

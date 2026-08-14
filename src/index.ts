@@ -33,6 +33,7 @@ import { RTVStreamAgent } from "./agents/RTVStreamAgent";
 import { orchestrateAgenticWorkflow, encodeState, decodeState } from "./lib/agentService";
 import { authenticateTelegramUser, validateTelegramData } from "./lib/telegramAuth";
 import { handleTributeWebhook, handleTributeGetSubscriptions, handleTributeGetOrders } from "./lib/tributeGateway";
+import { createStarsInvoice, sendStarsInvoice, answerPreCheckout, handlePaymentUpdate, STARS_CATALOG, buildOrderPayload, findCatalogItem } from "./lib/telegramStars";
 import { handleVeniceInference } from "./lib/veniceAiRouter";
 import { handleTelegramUpdate, sendTelegramMessage } from "./lib/telegramHandler";
 import { initStream, endStream, getActiveStreams, recordViewer } from "./lib/streamOrchestrator";
@@ -320,6 +321,19 @@ export default {
         // Token not yet set — ack Telegram so it doesn't disable webhook
         return json({ ok: true, status: "pending_token" });
       }
+      // ── Stars Payment Interception (before bot handler) ────────────────
+      try {
+        const update = await request.clone().json();
+        const paymentResult = await handlePaymentUpdate(update, {
+          botToken: env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "",
+          supabaseUrl: env.SUPABASE_URL || "",
+          supabaseKey: env.SUPABASE_SERVICE_KEY || "",
+        });
+        if (paymentResult.handled) {
+          return json({ ok: true, handled: "stars_payment", action: paymentResult.action });
+        }
+      } catch (e) { /* not a JSON update or not a payment update — continue */ }
+
       const botResp = await routeWalletBot(request, env as any);
       if (botResp) return botResp;
     }
@@ -595,6 +609,45 @@ export default {
       if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return json({ error: "Supabase not configured" }, 503);
       const db = createSupabaseClient(env as any);
       const gifts = await db.select<any>("gifts", "order=sort_order.asc&select=*");
+
+    // ── POST /api/stars/invoice — Create Telegram Stars invoice ──────────
+    if (pathname === "/api/stars/invoice" && request.method === "POST") {
+      try {
+        const body = await request.json<any>();
+        const { type, item_id, stream_id, host_id, user_id } = body;
+        const item = findCatalogItem(item_id);
+        if (!item) return json({ ok: false, error: "Item not found" }, 404);
+
+        const botToken = env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6;
+        if (!botToken) return json({ ok: false, error: "Bot token not configured" }, 503);
+
+        const payload = buildOrderPayload(type, item_id, user_id || 0, stream_id, host_id);
+        const result = await createStarsInvoice(botToken, {
+          title: item.label,
+          description: `RotationTV ${type}: ${item.label}`,
+          payload,
+          prices: [{ amount: item.stars, label: item.label }],
+        });
+        return json(result);
+      } catch (e: any) {
+        return json({ ok: false, error: e.message }, 500);
+      }
+    }
+
+    // ── GET /api/stars/catalog — Stars pricing catalog ────────────────────
+    if (pathname === "/api/stars/catalog" && request.method === "GET") {
+      return json({ ok: true, catalog: STARS_CATALOG, currency: "XTR" });
+    }
+
+    // ── GET /api/stars/balance — User's Star balance ──────────────────────
+    if (pathname === "/api/stars/balance" && request.method === "GET") {
+      const userId = parseInt(url.searchParams.get("user_id") || "0");
+      if (!userId) return json({ error: "user_id required" }, 400);
+      const botToken = env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6;
+      if (!botToken) return json({ error: "Bot token not configured" }, 503);
+      // Telegram doesn't expose user balance via API yet — return placeholder
+      return json({ ok: true, balance: null, note: "Check balance in Telegram Settings" });
+    }
       return json({ gifts });
     }
 
