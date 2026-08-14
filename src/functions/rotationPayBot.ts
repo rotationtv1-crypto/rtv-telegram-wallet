@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
         inline_keyboard: [
           [{ text: "💎 Telegram Wallet (USDT/TON/BTC)", callback_data: "pay_telegram_wallet" }],
           [{ text: "🅿️ PayPal", callback_data: "pay_paypal" }, { text: "💳 Card (Stripe)", callback_data: "pay_stripe" }],
-          [{ text: "◎ Solana / $RTV", callback_data: "pay_solana" }, { text: "🪙 Buy $RTV", callback_data: "buy_rtv" }],
+          [{ text: "⭐ Telegram Stars", callback_data: "pay_usdt" }, { text: "⭐ Buy Stars", callback_data: "buy_stars" }],
           [{ text: "⚡ All 7 Rails", callback_data: "check_rails" }, { text: "🔗 Refer & Earn", callback_data: "refer_earn" }],
           [{ text: "🌐 Web3 Status", callback_data: "web3_status" }, { text: "💹 $RTV Engine", callback_data: "rtv_engine" }],
           [{ text: "🏛️ Open RotationTV Portal", url: PORTAL_URL }],
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
           reply_markup: { inline_keyboard: [[{ text: "💎 Open Telegram Wallet →", url: TG_WALLET }], backBtn] }
         });
 
-      } else if (data === "pay_solana") {
+      } else if (data === "pay_usdt") {
         await send(chat_id,
           `◎ *Solana / $RTV — Fastest Rail*\n\n` +
           `⚡ 2-second finality\n⚡ ~$0.0001 per transaction\n⚡ Powered by Chainstack nodes\n\n` +
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
           `_$RTV is the resonant frequency of the RotationTV ecosystem._`, {
           reply_markup: { inline_keyboard: [
             [{ text: "◎ Open Solana Portal →", url: PORTAL_URL }],
-            [{ text: "🪙 Buy $RTV First →", callback_data: "buy_rtv" }],
+            [{ text: "⭐ Buy Stars First →", callback_data: "buy_stars" }],
             backBtn,
           ]}
         });
@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
           reply_markup: { inline_keyboard: [[{ text: "💳 Pay with Card →", url: PORTAL_URL }], backBtn] }
         });
 
-      } else if (data === "buy_rtv") {
+      } else if (data === "buy_stars") {
         await send(chat_id,
           `⚡ *$RTV Infinite Wealth Engine*\n\n` +
           `$RTV is the resonant token of the RotationTV Network — every company in the ecosystem feeds value back into $RTV.\n\n` +
@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
           `🟠 10,000 $RTV — $349 (2x staking)\n` +
           `🔴 50,000 $RTV — $1,499 (5x staking)`,
           { reply_markup: { inline_keyboard: [
-            [{ text: "🪙 Buy $RTV Now →", callback_data: "buy_rtv" }],
+            [{ text: "⭐ Buy Stars Now →", callback_data: "buy_stars" }],
             [{ text: "◎ Solana Portal →", url: PORTAL_URL }],
             backBtn,
           ]}}
@@ -329,7 +329,7 @@ _Example:_
           await send(chat_id, dashData.dashboard_message, {
             reply_markup: { inline_keyboard: [
               [{ text: "🔄 Refresh", callback_data: "refresh_balance" }, { text: "⚡ Resonance Meter", callback_data: "resonance_meter" }],
-              [{ text: "🪙 Buy More $RTV →", callback_data: "buy_rtv" }],
+              [{ text: "🪙 Buy More $RTV →", callback_data: "buy_stars" }],
             ]}
           });
         } else {
@@ -435,7 +435,7 @@ Use /balance to see your live dashboard.`, {
         `*Your move:* Buy $RTV. Stake it. Watch the resonance multiply. ♾️`, {
         reply_markup: { inline_keyboard: [
           [{ text: "⚡ Activate Wealth Engine →", callback_data: "rtv_engine" }],
-          [{ text: "🪙 Buy $RTV →", callback_data: "buy_rtv" }],
+          [{ text: "⭐ Buy Stars →", callback_data: "buy_stars" }],
         ]}
       });
 

@@ -57,14 +57,14 @@ export default async function handler(req: Request): Promise<Response> {
       } else if (text === '/gift' || text === '/gift@base44_229784_bot') {
         const res = await fetch(`${STREAM_API}/api/gifts`);
         const data = await res.json();
-        const gifts = (data.gifts || []).map(g => `${g.emoji} ${g.name}: ${g.price_rtv} RTV ($${g.price_usd})`).join('\n');
+        const gifts = (data.gifts || []).map(g => `${g.emoji} ${g.name}: ${g.stars} ⭐`).join('\n');
         responseText = `🎁 Available Gifts\n\n${gifts}\n\nUse: /gift [name] [streamer]`;
       } else if (text === '/pk' || text === '/pk@base44_229784_bot') {
         responseText = `⚔️ PK Battle\n\nChallenge a creator!\nUse: /pk [streamer] [stake]\nExample: /pk @streamer 500\n\nWinner takes the pot!';
       } else if (text === '/subscribe' || text === '/subscribe@base44_229784_bot') {
         const res = await fetch(`${STREAM_API}/api/subscriptions/tiers`);
         const data = await res.json();
-        const tiers = (data.tiers || []).map(t => `${t.tier.toUpperCase()}: $${t.price_usd}/mo (${t.price_rtv} RTV)\n  ${t.perks.join(', ')}`).join('\n\n');
+        const tiers = (data.tiers || []).map(t => `${t.tier.toUpperCase()}: $${t.price_usd}/mo (${t.stars} ⭐)\n  ${t.perks.join(', ')}`).join('\n\n');
         responseText = `⭐ Subscription Tiers\n\n${tiers}`;
       } else if (text === '/balance' || text === '/balance@base44_229784_bot') {
         const res = await fetch(`${STREAM_API}/api/balance?user_id=tg_${userId}`);

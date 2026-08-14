@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
           { id: "g7", name: "Crown", emoji: "👑", price_usd: 2.00, stars: 200, category: "premium" },
           { id: "g8", name: "Rocket", emoji: "🚀", price_usd: 5.00, stars: 500, category: "legendary" },
           { id: "g9", name: "Castle", emoji: "🏰", price_usd: 10.00, stars: 500, category: "legendary" },
-          { id: "g10", name: "Galaxy", emoji: "🌌", price_usd: 50.00, price_rtv: 5000, category: "legendary" },
+          { id: "g10", name: "Galaxy", emoji: "🌌", price_usd: 50.00, stars: 999, category: "legendary" },
         ],
         latency_ms: Date.now() - start,
       }, { headers: CORS });
@@ -82,10 +82,10 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true,
         tiers: [
-          { id: "t1", tier_name: "bronze", badge_emoji: "🥉", price_usd_monthly: 4.99, price_rtv_monthly: 499, perks: ["Priority chat", "Bronze badge", "Emote pack #1"] },
-          { id: "t2", tier_name: "silver", badge_emoji: "🥈", price_usd_monthly: 9.99, price_rtv_monthly: 999, perks: ["All Bronze", "DM access", "5% off gifts", "100 free RTV/mo"] },
-          { id: "t3", tier_name: "gold", badge_emoji: "🥇", price_usd_monthly: 19.99, price_rtv_monthly: 1999, perks: ["All Silver", "Exclusive content", "10% off gifts", "500 free RTV/mo"] },
-          { id: "t4", tier_name: "platinum", badge_emoji: "💎", price_usd_monthly: 49.99, price_rtv_monthly: 4999, perks: ["All Gold", "VIP access", "15% off gifts", "2000 free RTV/mo", "Shoutouts"] },
+          { id: "t1", tier_name: "bronze", badge_emoji: "🥉", price_usd_monthly: 4.99, stars_monthly: 100, perks: ["Priority chat", "Bronze badge", "Emote pack #1"] },
+          { id: "t2", tier_name: "silver", badge_emoji: "🥈", price_usd_monthly: 9.99, stars_monthly: 200, perks: ["All Bronze", "DM access", "5% off gifts", "100 free ⭐"] },
+          { id: "t3", tier_name: "gold", badge_emoji: "🥇", price_usd_monthly: 19.99, stars_monthly: 500, perks: ["All Silver", "Exclusive content", "10% off gifts", "500 free ⭐"] },
+          { id: "t4", tier_name: "platinum", badge_emoji: "💎", price_usd_monthly: 49.99, stars_monthly: 1009, perks: ["All Gold", "VIP access", "15% off gifts", "999 free ⭐", "Shoutouts"] },
         ],
         latency_ms: Date.now() - start,
       }, { headers: CORS });
