@@ -1,0 +1,150 @@
+name: Kimi AI Code Review
+
+on:
+  pull_request:
+    branches: [main, dev]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  kimi-review:
+    name: 🤖 Kimi Code Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E '\.(ts|tsx|js|jsx|sql|json)$' \
+            | head -20 \
+            > changed_files.txt
+          echo "Files changed:"
+          cat changed_files.txt
+          echo "count=$(wc -l < changed_files.txt)" >> $GITHUB_OUTPUT
+
+      - name: Run Kimi Code Review
+        if: steps.changed.outputs.count > 0
+        env:
+          KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Running Kimi K2.7 Code review..."
+
+          REVIEW_BODY="## 🤖 Kimi AI Code Review\n\n**Model:** kimi-k2.7-code | **Authority:** Darrel | Rotationtvnetwork LLC\n\n"
+
+          TOTAL_ISSUES=0
+          TOTAL_SCORE=0
+          FILE_COUNT=0
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ ! -f "$file" ] && continue
+
+            echo "Reviewing: $file"
+
+            # Get file extension for language detection
+            EXT="${file##*.}"
+            case "$EXT" in
+              ts|tsx) LANG="typescript" ;;
+              js|jsx) LANG="javascript" ;;
+              sql)    LANG="sql" ;;
+              json)   LANG="json" ;;
+              *)      LANG="text" ;;
+            esac
+
+            CODE=$(cat "$file" | head -300)
+
+            RESPONSE=$(curl -s -X POST "https://api.moonshot.ai/v1/chat/completions" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $KIMI_API_KEY" \
+              -d "{
+                \"model\": \"kimi-k2.7-code\",
+                \"messages\": [
+                  {
+                    \"role\": \"system\",
+                    \"content\": \"You are the RTV Kimi Agent reviewing code for RotationtvNetwork LLC. Stack: Cloudflare Workers, TypeScript, Supabase, TON blockchain. Be precise and production-focused.\"
+                  },
+                  {
+                    \"role\": \"user\",
+                    \"content\": \"Review this $LANG file: $file\n\nFind bugs, security issues, and improvements. Return JSON:\n{\\\"score\\\": 0-100, \\\"grade\\\": \\\"A|B|C|D|F\\\", \\\"issues\\\": [{\\\"severity\\\": \\\"critical|high|medium|low\\\", \\\"message\\\": \\\"...\\\"}], \\\"summary\\\": \\\"...\\\", \\\"suggestions\\\": [\\\"...\\\"]}\n\n\`\`\`$LANG\n$(echo "$CODE" | head -200)\n\`\`\`\"
+                  }
+                ],
+                \"max_tokens\": 1000,
+                \"temperature\": 0.1,
+                \"response_format\": {\"type\": \"json_object\"}
+              }" 2>/dev/null)
+
+            CONTENT=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['choices'][0]['message']['content'])" 2>/dev/null || echo "{}")
+
+            SCORE=$(echo "$CONTENT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('score',0))" 2>/dev/null || echo "0")
+            GRADE=$(echo "$CONTENT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('grade','?'))" 2>/dev/null || echo "?")
+            SUMMARY=$(echo "$CONTENT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('summary','Review complete.'))" 2>/dev/null || echo "Review complete.")
+            ISSUES_COUNT=$(echo "$CONTENT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('issues',[])))" 2>/dev/null || echo "0")
+
+            GRADE_EMOJI="✅"
+            [ "$SCORE" -lt 80 ] && GRADE_EMOJI="⚠️"
+            [ "$SCORE" -lt 60 ] && GRADE_EMOJI="❌"
+
+            REVIEW_BODY="${REVIEW_BODY}### ${GRADE_EMOJI} \`${file}\` — Grade: **${GRADE}** (${SCORE}/100)\n\n${SUMMARY}\n\n"
+
+            # Add issues if any
+            if [ "$ISSUES_COUNT" -gt "0" ]; then
+              REVIEW_BODY="${REVIEW_BODY}**Issues found: ${ISSUES_COUNT}**\n"
+              ISSUES=$(echo "$CONTENT" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+for issue in d.get('issues', [])[:5]:
+    sev = issue.get('severity','info').upper()
+    msg = issue.get('message','')
+    print(f'- [{sev}] {msg}')
+" 2>/dev/null || echo "")
+              REVIEW_BODY="${REVIEW_BODY}${ISSUES}\n\n"
+              TOTAL_ISSUES=$((TOTAL_ISSUES + ISSUES_COUNT))
+            fi
+
+            TOTAL_SCORE=$((TOTAL_SCORE + SCORE))
+            FILE_COUNT=$((FILE_COUNT + 1))
+
+            echo "  → Grade: $GRADE ($SCORE/100) | Issues: $ISSUES_COUNT"
+          done < changed_files.txt
+
+          # Overall summary
+          if [ "$FILE_COUNT" -gt 0 ]; then
+            AVG_SCORE=$((TOTAL_SCORE / FILE_COUNT))
+            REVIEW_BODY="${REVIEW_BODY}---\n### 📊 Overall: ${AVG_SCORE}/100 | ${FILE_COUNT} files reviewed | ${TOTAL_ISSUES} total issues\n\n"
+            
+            if [ "$TOTAL_ISSUES" -gt 0 ]; then
+              REVIEW_BODY="${REVIEW_BODY}⚠️ **${TOTAL_ISSUES} issue(s) found.** Please review before merging.\n"
+            else
+              REVIEW_BODY="${REVIEW_BODY}✅ **No critical issues found.** Safe to merge.\n"
+            fi
+          fi
+
+          REVIEW_BODY="${REVIEW_BODY}\n<sub>🤖 Powered by Kimi K2.7 Code | Rotationtvnetwork LLC | Presidential Authority: Darrel</sub>"
+
+          # Post review as PR comment
+          echo -e "$REVIEW_BODY" > review_comment.txt
+
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/$REPO/issues/$PR_NUMBER/comments" \
+            -f body="$(cat review_comment.txt)"
+
+          echo "✅ Kimi review posted to PR #$PR_NUMBER"
+
+      - name: No files to review
+        if: steps.changed.outputs.count == 0
+        run: echo "No reviewable files changed in this PR."

@@ -141,13 +141,13 @@ export default function App() {
                       sender_id: user.id,
                       receiver_id: activeStream.creator_id,
                       stream_id: activeStream.stream_id,
-                      amount_stars: gift.stars,
+                      amount_rtv: gift.price_rtv,
                       gift_id: gift.id,
                       gift_emoji: gift.emoji,
                     }),
                   });
                   if (resp.ok) {
-                    useStore.getState().deductRtv(gift.stars);
+                    useStore.getState().deductRtv(gift.price_rtv);
                     window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred("success");
                   } else {
                     window.Telegram?.WebApp?.showAlert?.("Gift failed to send — try again.");
