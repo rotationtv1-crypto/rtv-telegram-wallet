@@ -12,7 +12,7 @@ const CORS = {
 const JSON_HEADERS = { ...CORS, 'Content-Type': 'application/json' };
 
 // Economic parity: 1 RTV = $0.01 USD
-const RTV_PER_USD = 100;
+
 const RTV_PER_STAR = 1.3; // 1 Star = $0.013
 
 export default {
@@ -74,10 +74,10 @@ export default {
     if (path === '/api/tip/send' && method === 'POST') {
       const body = await request.json();
       const amount_usd = body.amount_usd || 0;
-      const amount_rtv = Math.floor(amount_usd * RTV_PER_USD);
+      const amount_stars = Math.floor(amount_usd / 0.013) // Stars at $0.013 each;
       const stars_amount = body.stars_amount || 0;
       const stars_rtv = Math.floor(stars_amount * RTV_PER_STAR);
-      const total_rtv = amount_rtv + stars_rtv;
+      const total_stars = amount_stars // Stars only, no RTV conversion;
 
       // 80/15/5 split
       const creator_share = Math.floor(total_rtv * 0.80);
@@ -87,7 +87,7 @@ export default {
       return jsonResponse({
         success: true,
         tip_id: crypto.randomUUID(),
-        amount_rtv: total_rtv,
+        stars: total_stars,
         amount_usd: (total_rtv / RTV_PER_USD).toFixed(2),
         split: {
           creator: creator_share,
@@ -124,7 +124,7 @@ export default {
         battle_id: crypto.randomUUID(),
         challenger_id: body.challenger_id,
         opponent_id: body.opponent_id,
-        stake_amount_rtv: body.stake_amount_rtv || 100,
+        stake_amount_stars: body.stake_amount_stars || 100,
         status: 'pending',
         battle_type: body.battle_type || 'tip_battle',
         created_at: new Date().toISOString()
@@ -150,7 +150,7 @@ export default {
         success: true,
         ccbill_url: `https://ccbill.com/cgi-bin/ccbill/jsecure/payment.cgi?amount=${body.amount_usd || 10}&product=rtv-erotica`,
         amount_usd: body.amount_usd || 10,
-        amount_rtv: Math.floor((body.amount_usd || 10) * RTV_PER_USD),
+        stars: Math.floor((body.amount_usd || 10) * RTV_PER_USD),
         rail: 'ccbill',
         note: 'CCBill is the approved adult-content processor for Rotation Erotica only'
       });
@@ -164,7 +164,7 @@ export default {
         tribute_session_id: crypto.randomUUID(),
         creator_id: body.creator_id,
         amount_usd: body.amount_usd || 5,
-        amount_rtv: Math.floor((body.amount_usd || 5) * RTV_PER_USD),
+        stars: Math.floor((body.amount_usd || 5) * RTV_PER_USD),
         rail: 'tribute',
         note: 'Tribute API — adult-content compliant creator tipping'
       });
@@ -209,13 +209,13 @@ export default {
     // Creator payout
     if (path === '/api/payout/request' && method === 'POST') {
       const body = await request.json();
-      const rtv = body.amount_rtv || 1000;
+      const stars = body.amount_stars || 1000;
       const usd = (rtv / RTV_PER_USD).toFixed(2);
       return jsonResponse({
         success: true,
         payout_id: crypto.randomUUID(),
         creator_id: body.creator_id,
-        amount_rtv: rtv,
+        stars: stars,
         amount_usd: usd,
         method: body.method || 'ton',
         fee_rtv: Math.floor(rtv * 0.005),
