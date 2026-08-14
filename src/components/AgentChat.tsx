@@ -9,7 +9,7 @@ interface ChatMessage {
   ts: number;
   is_creator?: boolean;
   is_tip?: boolean;
-  tip_amount_rtv?: number;
+  tip_amount_stars?: number;
   gift_emoji?: string;
   moderation_action?: "allow" | "warn" | "ban";
 }

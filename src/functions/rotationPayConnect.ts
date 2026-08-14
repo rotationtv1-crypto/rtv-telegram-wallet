@@ -167,7 +167,7 @@ export default async function handler(req: Request): Promise<Response> {
         actor: email,
         actor_role: "merchant",
         amount_usd: planConfig.price_usd,
-        amount_rtv: 0,
+        stars: 0,
         rail: "stripe_connect",
         risk_score: 10,
         flags: [],
@@ -270,7 +270,7 @@ export default async function handler(req: Request): Promise<Response> {
       const merchant = merchants[0];
       const planConfig = PLANS[merchant.plan] || PLANS.starter;
       const platformFee = Math.round(amount_usd * 100 * (planConfig.revenue_share_pct / 100));
-      const rtvCashback = amount_usd * (planConfig.rtv_cashback_pct / 100);
+      const starsCashback = amount_usd * (planConfig.rtv_cashback_pct / 100);
 
       // Create Stripe PaymentIntent
       const paymentIntent = await stripe.paymentIntents.create({
@@ -281,7 +281,7 @@ export default async function handler(req: Request): Promise<Response> {
           merchant_id: merchant.id,
           merchant_name: merchant.business_name,
           rail,
-          rtv_cashback: String(rtvCashback),
+          rtv_cashback: String(starsCashback),
           ...metadata
         },
         ...(merchant.stripe_account_id ? {
@@ -299,7 +299,7 @@ export default async function handler(req: Request): Promise<Response> {
         actor: merchant.email,
         actor_role: "merchant",
         amount_usd: Number(amount_usd),
-        amount_rtv: rtvCashback,
+        stars: starsCashback,
         rail,
         stripe_event_id: paymentIntent.id,
         risk_score: 15,
@@ -308,7 +308,7 @@ export default async function handler(req: Request): Promise<Response> {
         tax_category: "payment",
         is_suspicious: false,
         reviewed_by: "OMEGA_AUTO",
-        notes: `Payment via ${rail} | Platform fee: $${(platformFee / 100).toFixed(2)} | RTV cashback: ${rtvCashback.toFixed(4)}`
+        notes: `Payment via ${rail} | Platform fee: $${(platformFee / 100).toFixed(2)} | RTV cashback: ${starsCashback.toFixed(4)}`
       });
 
       // Update merchant volume
@@ -323,7 +323,7 @@ export default async function handler(req: Request): Promise<Response> {
         client_secret: paymentIntent.client_secret,
         amount_usd,
         platform_fee_usd: (platformFee / 100).toFixed(2),
-        rtv_cashback: rtvCashback.toFixed(4),
+        rtv_cashback: starsCashback.toFixed(4),
         rail,
         status: paymentIntent.status,
         merchant: merchant.business_name

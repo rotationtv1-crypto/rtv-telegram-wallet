@@ -419,7 +419,7 @@ export function createSuperAgentBot(env: Env, botToken?: string): Bot {
   bot.command('tip', async (ctx) => {
     const args = ctx.message?.text?.split(' ').slice(1);
     if (!args || args.length < 2) {
-      await ctx.reply('💰 Usage: /tip @username [amount_rtv]\n\nExample: /tip @creator123 100');
+      await ctx.reply('💰 Usage: /tip @username [amount_stars]\n\nExample: /tip @creator123 100');
       return;
     }
     const [recipient, amountStr] = args;
@@ -442,7 +442,7 @@ export function createSuperAgentBot(env: Env, botToken?: string): Bot {
         gift_id: 'direct_tip',
         gift_name: 'Direct Tip',
         gift_emoji: '💸',
-        amount_rtv: amount,
+        amount_stars: amount,
         amount_usd: parseFloat(usd),
         combo_count: 1,
         message: `Direct tip from @${ctx.from?.username}`,

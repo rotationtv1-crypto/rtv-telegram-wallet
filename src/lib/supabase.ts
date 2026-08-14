@@ -70,7 +70,7 @@ export interface Tip {
   stream_id: string;
   sender_id: string;
   receiver_id: string;
-  amount_rtv: number;
+  amount_stars: number;
   amount_usd: number;
   gift_id: string | null;
   gift_name: string | null;
@@ -86,7 +86,7 @@ export interface Tip {
 export interface Withdrawal {
   id: string;
   user_id: string;
-  amount_rtv: number;
+  amount_stars: number;
   amount_usd: number;
   status: 'pending' | 'approved' | 'rejected' | 'completed';
   ton_address: string;
@@ -397,7 +397,7 @@ export async function logTip(db: SupabaseWorkerClient, tip: Partial<Tip>): Promi
       gift_id: tip.gift_id,
       gift_name: tip.gift_name,
       combo_count: tip.combo_count ?? 1,
-      amount_rtv: tip.amount_rtv,
+      amount_stars: tip.amount_stars,
     },
     created_at: new Date().toISOString(),
   });
@@ -411,7 +411,7 @@ export async function getCreatorEarnings(
   const query = `creator_id=eq.${creatorId}&tx_type=eq.tip&status=eq.confirmed${since ? `&created_at=gte.${since}` : ''}`;
   const txs = await db.select<Transaction>('transactions', query);
   return {
-    total_rtv: txs.reduce((s, t) => s + (t.metadata?.amount_rtv ?? 0), 0),
+    total_rtv: txs.reduce((s, t) => s + (t.metadata?.amount_stars ?? 0), 0),
     total_usd: txs.reduce((s, t) => s + t.amount_usd, 0),
     tip_count: txs.length,
   };
@@ -444,7 +444,7 @@ export async function requestWithdrawal(
     amount_usd: amountUsd,
     status: 'pending',
     description: `Withdrawal of ${amountRtv} RTVS to ${tonAddress}`,
-    metadata: { amount_rtv: amountRtv, ton_address: tonAddress },
+    metadata: { amount_stars: amountRtv, ton_address: tonAddress },
     created_at: new Date().toISOString(),
   } as any);
 }

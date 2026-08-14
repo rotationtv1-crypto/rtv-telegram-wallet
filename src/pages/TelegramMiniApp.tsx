@@ -289,7 +289,7 @@ function GiftsScreen({ user, onSendGift, gifts }) {
           }}>
             <div style={{ fontSize: 28 }}>{g.emoji}</div>
             <div style={{ fontSize: 11, fontWeight: 700, marginTop: 4, color: C.text }}>{g.name}</div>
-            <div style={{ fontSize: 10, color: C.neon }}>{fmt(g.price_rtv, 0)} RTV</div>
+            <div style={{ fontSize: 10, color: C.neon }}>{fmt(g.stars, 0)} RTV</div>
             <div style={{ fontSize: 9, color: C.muted }>${fmt(g.price_usd)}</div>
           </button>
         ))}
@@ -301,7 +301,7 @@ function GiftsScreen({ user, onSendGift, gifts }) {
             <span style={{ fontSize: 32 }}>{selected.emoji}</span>
             <div>
               <div style={{ fontSize: 14, fontWeight: 800 }}>{selected.name}</div>
-              <div style={{ fontSize: 11, color: C.neon }}>{fmt(selected.price_rtv * combo, 0)} RTV (${fmt(selected.price_usd * combo)})</div>
+              <div style={{ fontSize: 11, color: C.neon }}>{fmt(selected.stars * combo, 0)} RTV (${fmt(selected.price_usd * combo)})</div>
             </div>
           </div>
 
@@ -316,7 +316,7 @@ function GiftsScreen({ user, onSendGift, gifts }) {
           </div>
 
           <Btn onClick={send} loading={sending} disabled={!user}>
-            Send {fmt(selected.price_rtv * combo, 0)} RTV
+            Send {fmt(selected.stars * combo, 0)} RTV
           </Btn>
         </Card>
       )}
@@ -353,7 +353,7 @@ function SubsScreen({ tiers, onSubscribe }) {
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: C.neon }}>${fmt(t.price_usd_monthly)}</div>
-              <div style={{ fontSize: 10, color: C.muted }}>/month · {fmt(t.price_rtv_monthly, 0)} RTV</div>
+              <div style={{ fontSize: 10, color: C.muted }}>/month · {fmt(t.stars_monthly, 0)} RTV</div>
             </div>
           </div>
 
@@ -546,12 +546,12 @@ export default function TelegramMiniApp() {
       action: "process_tip",
       gift_id: gift.id,
       gift_name: gift.name,
-      amount_rtv: gift.price_rtv * combo,
+      amount_stars: gift.stars * combo,
       combo_count: combo,
       sender_id: user?.id,
     });
     if (res?.success) {
-      showToast(`Sent ${fmt(gift.price_rtv * combo, 0)} RTV ${gift.emoji}!`, "success");
+      showToast(`Sent ${fmt(gift.stars * combo, 0)} RTV ${gift.emoji}!`, "success");
     } else {
       showToast(res?.error || "Gift failed", "error");
     }
@@ -562,7 +562,7 @@ export default function TelegramMiniApp() {
       action: "subscribe",
       tier: tier.tier_name,
       price_usd: tier.price_usd_monthly,
-      price_rtv: tier.price_rtv_monthly,
+      stars: tier.stars_monthly,
       subscriber_id: user?.id,
     });
     if (res?.success) {

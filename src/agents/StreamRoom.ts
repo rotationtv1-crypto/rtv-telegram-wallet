@@ -8,7 +8,7 @@ interface ChatMessage {
   ts: number;
   is_creator?: boolean;
   is_tip?: boolean;
-  tip_amount_rtv?: number;
+  tip_amount_stars?: number;
   gift_emoji?: string;
 }
 
@@ -71,11 +71,11 @@ export class StreamRoom extends DurableObject {
       }
 
       if (url.pathname === "/tip" && request.method === "POST") {
-        const tip = await request.json() as { amount_rtv: number; user_id: string; username: string; gift_emoji: string };
+        const tip = await request.json() as { amount_stars: number; user_id: string; username: string; gift_emoji: string };
         if (!this.state) return Response.json({ error: "Room not initialized" }, { status: 400 });
-        this.state.total_tips_rtv += tip.amount_rtv;
+        this.state.total_tips_rtv += tip.amount_stars;
         this.state.tip_count += 1;
-        const tipMsg: ChatMessage = { user_id: tip.user_id, username: tip.username, text: `sent ${tip.amount_rtv} RTV!`, ts: Date.now(), is_tip: true, tip_amount_rtv: tip.amount_rtv, gift_emoji: tip.gift_emoji };
+        const tipMsg: ChatMessage = { user_id: tip.user_id, username: tip.username, text: `sent ${tip.amount_stars} RTV!`, ts: Date.now(), is_tip: true, tip_amount_stars: tip.amount_stars, gift_emoji: tip.gift_emoji };
         this.broadcast({ type: "tip", message: tipMsg, room_state: this.state });
         await this.ctx.storage.put("state", this.state);
         return Response.json({ success: true, total_tips: this.state.total_tips_rtv });
@@ -135,8 +135,8 @@ export class StreamRoom extends DurableObject {
         this.broadcast({ type: "chat", message: chatMsg });
       }
       if (data.type === "gift") {
-        if (this.state) { this.state.total_tips_rtv += data.amount_rtv; this.state.tip_count += 1; }
-        const tipMsg: ChatMessage = { user_id: data.user_id, username: data.username, text: `sent ${data.gift_name} (${data.amount_rtv} RTV)!`, ts: Date.now(), is_tip: true, tip_amount_rtv: data.amount_rtv, gift_emoji: data.gift_emoji };
+        if (this.state) { this.state.total_tips_rtv += data.amount_stars; this.state.tip_count += 1; }
+        const tipMsg: ChatMessage = { user_id: data.user_id, username: data.username, text: `sent ${data.gift_name} (${data.amount_stars} RTV)!`, ts: Date.now(), is_tip: true, tip_amount_stars: data.amount_stars, gift_emoji: data.gift_emoji };
         this.broadcast({ type: "tip", message: tipMsg, room_state: this.state });
       }
       if (data.type === "ping") ws.send(JSON.stringify({ type: "pong", viewer_count: this.ctx.getWebSockets().length }));

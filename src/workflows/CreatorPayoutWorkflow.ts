@@ -98,7 +98,7 @@ export class CreatorPayoutWorkflow extends WorkflowEntrypoint<Env, PayoutParams>
             action: "request_withdrawal",
             payload: {
               creator_id,
-              amount_rtv: split.creator_rtv,
+              amount_stars: split.creator_rtv,
               method: "ton_wallet",
               destination_address: "creator_ton_wallet",
             },

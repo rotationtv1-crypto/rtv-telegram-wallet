@@ -132,7 +132,7 @@ export async function logTransaction(tx: {
     .from(RTV_ENTITIES.RotationPayTransaction)
     .insert({
       ...tx,
-      amount_rtv: Math.floor(tx.amount * 100), // 1 RTV = $0.01
+      amount_stars: Math.floor(tx.amount * 100), // 1 RTV = $0.01
       blockchain_confirmed: tx.payment_rail !== 'internal_rtv',
       timestamp: new Date().toISOString(),
     });

@@ -78,7 +78,7 @@ async function handleStripePurchase(body: PaymentRequest, headers: any): Promise
     return json({ status: 'error', message: 'Minimum purchase is $1.00 USD' }, 400, headers);
   }
 
-  const rtv_to_receive = Math.floor(amount_usd / RTV_USD_PARITY); // 1 RTV = $0.01
+  const stars_to_receive = Math.floor(amount_usd / RTV_USD_PARITY); // 1 RTV = $0.01
   const stripeKey = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeKey) {
@@ -97,11 +97,11 @@ async function handleStripePurchase(body: PaymentRequest, headers: any): Promise
       'currency': currency,
       'metadata[telegram_id]': telegram_id || '',
       'metadata[user_id]': user_id || '',
-      'metadata[rtv_amount]': String(rtv_to_receive),
+      'metadata[rtv_amount]': String(stars_to_receive),
       'metadata[platform]': 'rotationtv',
       'metadata[token]': 'RTV',
       'metadata[tx_type]': 'rtv_purchase',
-      'description': `RTV Token Purchase — ${rtv_to_receive} RTV for $${amount_usd}`,
+      'description': `RTV Token Purchase — ${stars_to_receive} RTV for $${amount_usd}`,
     }),
   });
 
@@ -118,7 +118,7 @@ async function handleStripePurchase(body: PaymentRequest, headers: any): Promise
       payment_intent_id: stripeData.id,
       client_secret: stripeData.client_secret,
       amount_usd: amount_usd,
-      rtv_to_receive: rtv_to_receive,
+      stars_to_receive: stars_to_receive,
       currency: currency,
       parity: `1 RTV = $${RTV_USD_PARITY} USD`,
     },
@@ -138,7 +138,7 @@ async function handleStarsPurchase(body: PaymentRequest, headers: any): Promise<
 
   // Convert Stars → USD → RTV
   const usd_value = stars_amount * STAR_USD_VALUE;
-  const rtv_to_receive = Math.floor(usd_value / RTV_USD_PARITY);
+  const stars_to_receive = Math.floor(usd_value / RTV_USD_PARITY);
 
   const botToken = process.env.TELEGRAM_BOT_TOKEN_2 || process.env.TELEGRAM_BOT_TOKEN_3 || process.env.TELEGRAM_BOT_TOKEN_4;
 
@@ -152,8 +152,8 @@ async function handleStarsPurchase(body: PaymentRequest, headers: any): Promise<
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      title: `Purchase ${rtv_to_receive} RTV Tokens`,
-      description: `${stars_amount} Telegram Stars → ${rtv_to_receive} RTV (1 RTV = $0.01 USD)`,
+      title: `Purchase ${stars_to_receive} RTV Tokens`,
+      description: `${stars_amount} Telegram Stars → ${stars_to_receive} RTV (1 RTV = $0.01 USD)`,
       payload: payload,
       currency: 'XTR', // Telegram Stars currency code
       prices: [{
@@ -178,7 +178,7 @@ async function handleStarsPurchase(body: PaymentRequest, headers: any): Promise<
       invoice_url: invoiceData.result, // Telegram checkout URL
       stars_amount: stars_amount,
       usd_value: usd_value.toFixed(2),
-      rtv_to_receive: rtv_to_receive,
+      stars_to_receive: stars_to_receive,
       payload: payload,
       parity: `1 RTV = $${RTV_USD_PARITY} USD | 1 Star = $${STAR_USD_VALUE}`,
     },

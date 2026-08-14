@@ -54,7 +54,7 @@ export function FlyingGift({ tips, onDone }: FlyingGiftProps) {
                 }}
               >
                 <span style={{ color: "#A29BFE" }}>{tip.username}</span>{" "}
-                <span style={{ color: "#FDCB6E" }}>+{tip.tip_amount_rtv} RTV</span>
+                <span style={{ color: "#FDCB6E" }}>+{tip.tip_amount_stars} RTV</span>
               </div>
             </motion.div>
           );

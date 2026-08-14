@@ -340,7 +340,7 @@ function updateCombo(v,g) {
 async function sendGift() {
   if(!selectedGift) return;
   showToast('Sending '+fmt0(selectedGift.g.stars*combo)+' Stars...');
-  const res = await apiCall('starsPayment',gift_id:selectedGift.id,gift_name:selectedGift.name,amount_rtv:selectedGift.g.stars*combo,combo_count:combo,sender_id:tgUser?.id});
+  const res = await apiCall('starsPayment',gift_id:selectedGift.id,gift_name:selectedGift.name,stars:selectedGift.g.stars*combo,combo_count:combo,sender_id:tgUser?.id});
   if(res?.success) showToast('Sent '+fmt0(selectedGift.g.stars*combo)+' Stars '+selectedGift.emoji+'!');
   else showToast(res?.error||'Gift failed');
   document.getElementById('gift-detail').style.display='none';

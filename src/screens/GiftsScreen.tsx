@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-interface Gift { id: string; name: string; emoji: string; price_rtv: number; }
+interface Gift { id: string; name: string; emoji: string; stars: number; }
 
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
@@ -29,7 +29,7 @@ export function GiftsScreen() {
           >
             <div className="text-3xl mb-1">{g.emoji}</div>
             <div className="text-white text-xs font-bold text-center">{g.name}</div>
-            <div className="text-yellow-400 text-xs mt-1">{g.price_rtv} RTV</div>
+            <div className="text-yellow-400 text-xs mt-1">{g.stars} RTV</div>
           </motion.div>
         ))}
       </div>

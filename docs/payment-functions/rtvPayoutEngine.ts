@@ -35,12 +35,12 @@ Deno.serve(async (req) => {
 
     // ── Process Tip ──────────────────────────────
     if (action === "process_tip") {
-      const { gift_id, gift_name, amount_rtv, combo_count, sender_id, receiver_id, stream_id, message, is_anonymous } = body;
+      const { gift_id, gift_name, amount_stars, combo_count, sender_id, receiver_id, stream_id, message, is_anonymous } = body;
       const combo = getComboTier(combo_count || 1);
       const comboBonusRtv = combo.bonus_creator;
-      const creatorShare = Math.floor(amount_rtv * 0.80);
-      const platformFee = Math.floor(amount_rtv * 0.15);
-      const agencyFee = Math.floor(amount_rtv * 0.05);
+      const creatorShare = Math.floor(amount_stars * 0.80);
+      const platformFee = Math.floor(amount_stars * 0.15);
+      const agencyFee = Math.floor(amount_stars * 0.05);
       const creatorEarnRtv = creatorShare + comboBonusRtv;
 
       // Log tip to StreamTip entity
@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
           gift_id: gift_id || "",
           gift_name: gift_name || "",
           gift_emoji: body.gift_emoji || "🎁",
-          amount_rtv: amount_rtv,
-          amount_usd: +(amount_rtv * RTV_TO_USD).toFixed(2),
+          amount_stars: amount_stars,
+          amount_usd: +(amount_stars * RTV_TO_USD).toFixed(2),
           creator_earn_rtv: creatorEarnRtv,
           creator_earn_usd: +(creatorEarnRtv * RTV_TO_USD).toFixed(2),
           platform_fee_rtv: platformFee,
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       return Response.json({
         success: true,
         tip: {
-          gift_name, amount_rtv, combo_count: combo_count || 1,
+          gift_name, amount_stars, combo_count: combo_count || 1,
           combo_tier: combo.name, combo_multiplier: combo.multiplier,
           creator_earn_rtv: creatorEarnRtv,
           creator_earn_usd: +(creatorEarnRtv * RTV_TO_USD).toFixed(2),
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
 
     // ── Split Preview ────────────────────────────
     if (action === "split_preview") {
-      const { amount_rtv, split_type } = body;
+      const { amount_stars, split_type } = body;
       const splits = {
         standard: { creator: 80, platform: 15, agency: 5 },
         vip: { creator: 85, platform: 10, agency: 5 },
@@ -122,24 +122,24 @@ Deno.serve(async (req) => {
         success: true,
         split: {
           type: split_type || "standard",
-          creator_rtv: Math.floor(amount_rtv * (s.creator / 100)),
-          creator_usd: +(amount_rtv * (s.creator / 100) * RTV_TO_USD).toFixed(2),
-          platform_rtv: Math.floor(amount_rtv * (s.platform / 100)),
-          agency_rtv: Math.floor(amount_rtv * (s.agency / 100)),
+          creator_rtv: Math.floor(amount_stars * (s.creator / 100)),
+          creator_usd: +(amount_stars * (s.creator / 100) * RTV_TO_USD).toFixed(2),
+          platform_rtv: Math.floor(amount_stars * (s.platform / 100)),
+          agency_rtv: Math.floor(amount_stars * (s.agency / 100)),
         },
       });
     }
 
     // ── Request Withdrawal ───────────────────────
     if (action === "request_withdrawal") {
-      const { creator_id, amount_rtv, destination_address } = body;
-      const fee = Math.max(10, Math.floor(amount_rtv * 0.01));
-      const net = amount_rtv - fee;
+      const { creator_id, amount_stars, destination_address } = body;
+      const fee = Math.max(10, Math.floor(amount_stars * 0.01));
+      const net = amount_stars - fee;
       try {
         await base44.entities.CreatorWithdrawal.create({
           creator_id: String(creator_id || "unknown"),
-          amount_rtv: amount_rtv,
-          amount_usd: +(amount_rtv * RTV_TO_USD).toFixed(2),
+          amount_stars: amount_stars,
+          amount_usd: +(amount_stars * RTV_TO_USD).toFixed(2),
           method: "ton",
           destination_address: destination_address || "",
           fee_rtv: fee,
@@ -150,27 +150,27 @@ Deno.serve(async (req) => {
           requested_at: new Date().toISOString(),
         });
       } catch (e) { /* entity write may fail */ }
-      return Response.json({ success: true, withdrawal: { amount_rtv, fee_rtv: fee, net_rtv: net, status: "pending" } });
+      return Response.json({ success: true, withdrawal: { amount_stars, fee_rtv: fee, net_rtv: net, status: "pending" } });
     }
 
     // ── Subscribe ────────────────────────────────
     if (action === "subscribe") {
-      const { tier, price_usd, price_rtv, subscriber_id, creator_id } = body;
+      const { tier, price_usd, stars, subscriber_id, creator_id } = body;
       try {
         await base44.entities.CreatorSubscription.create({
           creator_id: String(creator_id || "platform"),
           subscriber_id: String(subscriber_id || "unknown"),
           tier: tier || "bronze",
           price_usd: price_usd || 4.99,
-          price_rtv: price_rtv || 499,
-          creator_share_rtv: Math.floor((price_rtv || 499) * 0.80),
+          stars: stars || 499,
+          creator_share_stars: Math.floor((stars || 499) * 0.80),
           status: "active",
           billing_cycle: "monthly",
           started_at: new Date().toISOString(),
           auto_renew: true,
         });
       } catch (e) { /* entity write may fail */ }
-      return Response.json({ success: true, subscription: { tier, price_usd, price_rtv, status: "active" } });
+      return Response.json({ success: true, subscription: { tier, price_usd, stars, status: "active" } });
     }
 
     return Response.json({ error: "Unknown action. Use: process_tip, process_pk_win, check_milestones, split_preview, request_withdrawal, subscribe" });

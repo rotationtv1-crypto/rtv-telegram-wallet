@@ -16,7 +16,7 @@ const supabase = createClient(
 interface Channel {
   id: string; name: string; slug: string; description: string;
   logo_url: string; banner_url: string; category: string;
-  tier: string; price_rtv_monthly: number; is_live: boolean;
+  tier: string; stars_monthly: number; is_live: boolean;
   sort_order: number;
 }
 
@@ -25,7 +25,7 @@ interface VodItem {
   genre: string[]; rating: string; runtime_minutes: number;
   poster_url: string; backdrop_url: string; thumbnail_url: string;
   playback_url: string; trailer_url: string;
-  access_tier: string; price_rtv: number; is_premium: boolean;
+  access_tier: string; stars: number; is_premium: boolean;
   is_exclusive: boolean; is_featured: boolean; is_trending: boolean;
   view_count: number; like_count: number;
   source_type: string; premiere_at: string; published_at: string;
@@ -34,14 +34,14 @@ interface VodItem {
 
 interface Plan {
   id: string; name: string; slug: string; description: string;
-  tier: string; price_rtv_monthly: number; price_usd_monthly: number;
+  tier: string; stars_monthly: number; price_usd_monthly: number;
   max_resolution: string; ad_free: boolean; exclusive_content: boolean;
   ai_clone_access: boolean; creator_tools: boolean; trial_days: number;
   is_popular: boolean;
 }
 
 interface Tribute {
-  id: string; name: string; slug: string; amount_rtv: number;
+  id: string; name: string; slug: string; amount_stars: number;
   amount_usd: number; emoji: string; display_color: string;
   is_animated: boolean;
 }
@@ -78,8 +78,8 @@ function ChannelCard({ channel, active, onClick }: { channel: Channel; active: b
         <div className="text-gray-400 text-xs truncate">{channel.description}</div>
       </div>
       <div className="text-right">
-        {channel.price_rtv_monthly > 0 ? (
-          <div className="text-pink-400 text-xs font-bold">{channel.price_rtv_monthly} RTV/mo</div>
+        {channel.stars_monthly > 0 ? (
+          <div className="text-pink-400 text-xs font-bold">{channel.stars_monthly} RTV/mo</div>
         ) : (
           <div className="text-green-400 text-xs font-bold">FREE</div>
         )}
@@ -147,8 +147,8 @@ function VodCard({ item, onClick }: { item: VodItem; onClick: (id: string) => vo
           <span className="text-gray-600 text-xs">·</span>
           <span className="text-gray-500 text-xs">👁 {item.view_count > 1000 ? `${(item.view_count / 1000).toFixed(1)}K` : item.view_count}</span>
         </div>
-        {item.price_rtv > 0 && (
-          <div className="text-pink-400 text-xs font-bold mt-1">💎 {item.price_rtv} RTV</div>
+        {item.stars > 0 && (
+          <div className="text-pink-400 text-xs font-bold mt-1">💎 {item.stars} RTV</div>
         )}
       </div>
     </div>
@@ -178,8 +178,8 @@ function PlanCard({ plan, current, onSelect }: { plan: Plan; current: boolean; o
           {plan.price_usd_monthly > 0 ? `$${plan.price_usd_monthly}` : 'FREE'}
         </div>
         <div className="text-gray-400 text-xs">/month</div>
-        {plan.price_rtv_monthly > 0 && (
-          <div className="text-pink-400 text-xs mt-1">or {plan.price_rtv_monthly} RTV</div>
+        {plan.stars_monthly > 0 && (
+          <div className="text-pink-400 text-xs mt-1">or {plan.stars_monthly} RTV</div>
         )}
       </div>
 
@@ -223,7 +223,7 @@ function TributeBar({ tributes, onTribute }: { tributes: Tribute[]; onTribute: (
           className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg bg-gray-900 border border-gray-800 hover:border-gray-600 transition-all min-w-[64px]"
         >
           <span className="text-2xl">{t.emoji}</span>
-          <span className="text-white text-xs font-bold">{t.amount_rtv}</span>
+          <span className="text-white text-xs font-bold">{t.amount_stars}</span>
           <span className="text-gray-500 text-[10px]">RTV</span>
         </button>
       ))}
@@ -381,7 +381,7 @@ export default function CatalogBrowser({ userId }: { userId: string }) {
               <div key={t.id} className="bg-gray-900 rounded-xl p-4 border border-gray-800 text-center">
                 <div className="text-4xl mb-2">{t.emoji}</div>
                 <div className="text-white font-bold">{t.name}</div>
-                <div className="text-pink-400 text-lg font-bold">{t.amount_rtv} RTV</div>
+                <div className="text-pink-400 text-lg font-bold">{t.amount_stars} RTV</div>
                 <div className="text-gray-500 text-xs">${t.amount_usd.toFixed(2)}</div>
                 <div className="w-full h-1 rounded-full mt-3" style={{ backgroundColor: t.display_color }} />
               </div>

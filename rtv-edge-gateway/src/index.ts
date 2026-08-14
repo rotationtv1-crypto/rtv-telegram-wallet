@@ -202,7 +202,7 @@ async function handleGiftSend(request: Request, env: Env, user: SupabaseUser) {
   const transferResult = await supabaseRPC(env, 'transfer_rtv', {
     p_sender_id: user.id,
     p_receiver_id: room.creator_id,
-    p_amount_rtv: gift.rtv_cost,
+    p_amount_stars: gift.rtv_cost,
     p_transfer_type: 'gift',
     p_description: gift.name,
     p_reference_id: room_id,
@@ -233,7 +233,7 @@ async function handleGiftSend(request: Request, env: Env, user: SupabaseUser) {
     status: 'sent',
     gift: gift.name,
     emoji: gift.emoji,
-    amount_rtv: gift.rtv_cost,
+    amount_stars: gift.rtv_cost,
     creator_id: room.creator_id,
   });
 }

@@ -78,22 +78,22 @@ export async function getUserBalance(userId: string) {
 
 export async function processCreatorPayout(data: {
   creator_id: string;
-  amount_rtv: number;
+  amount_stars: number;
   method: "ton" | "telegram_stars" | "internal";
   destination_address?: string;
 }) {
   const db = getDb();
-  const amountUsd = data.amount_rtv * 0.01; // 1 RTV = $0.01
+  const amountUsd = data.amount_stars * 0.01; // 1 RTV = $0.01
   
   // 80/15/5 revenue split
-  const creatorShare = Math.floor(data.amount_rtv * 0.80);
-  const platformFee = Math.floor(data.amount_rtv * 0.15);
-  const agencyFee = Math.floor(data.amount_rtv * 0.05);
+  const creatorShare = Math.floor(data.amount_stars * 0.80);
+  const platformFee = Math.floor(data.amount_stars * 0.15);
+  const agencyFee = Math.floor(data.amount_stars * 0.05);
   
   const [payout] = await db.insert(schema.creatorPayouts).values({
     creatorId: data.creator_id,
     amountUsd,
-    amountRtv: data.amount_rtv,
+    amountRtv: data.amount_stars,
     method: data.method,
     destinationAddress: data.destination_address || null,
     feeUsd: amountUsd * 0.20,
@@ -106,8 +106,8 @@ export async function processCreatorPayout(data: {
   
   return {
     payout_id: payout.id,
-    total_rtv: data.amount_rtv,
-    creator_share_rtv: creatorShare,
+    total_rtv: data.amount_stars,
+    creator_share_stars: creatorShare,
     platform_fee_rtv: platformFee,
     agency_fee_rtv: agencyFee,
     creator_net_usd: amountUsd * 0.80,

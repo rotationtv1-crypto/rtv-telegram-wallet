@@ -5,7 +5,7 @@ export interface TipEvent {
   user_id: string;
   username: string;
   gift_emoji: string;
-  tip_amount_rtv: number;
+  tip_amount_stars: number;
   ts: number;
 }
 
@@ -58,7 +58,7 @@ export function useStreamRoom(streamId: string | null) {
                 user_id: m.user_id,
                 username: m.username,
                 gift_emoji: m.gift_emoji || "🎁",
-                tip_amount_rtv: m.tip_amount_rtv || 0,
+                tip_amount_stars: m.tip_amount_stars || 0,
                 ts: m.ts || Date.now(),
               },
             ]);

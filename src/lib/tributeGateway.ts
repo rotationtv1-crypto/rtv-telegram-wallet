@@ -197,7 +197,7 @@ export async function processTributeWebhook(
         creator_id: null,
         tier: payload.subscription_name,
         price_usd: payload.price,
-        price_rtv: Math.floor(payload.price * 100), // 1 RTV = $0.01
+        stars: Math.floor(payload.price * 100), // 1 RTV = $0.01
         payment_method: 'tribute',
         status: 'active',
         current_period_start: event.created_at,

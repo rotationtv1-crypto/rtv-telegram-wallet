@@ -74,7 +74,7 @@ describe('Rotation Erotica — Security Hardening', () => {
       const { status } = await supabaseRPC('transfer_rtv', {
         p_sender_id: '00000000-0000-0000-0000-000000000000',
         p_receiver_id: '11111111-1111-1111-1111-111111111111',
-        p_amount_rtv: 1000,
+        p_amount_stars: 1000,
         p_type: 'gift',
       }, ANON_KEY);
 
@@ -87,7 +87,7 @@ describe('Rotation Erotica — Security Hardening', () => {
       const { status } = await supabaseRPC('transfer_rtv', {
         p_sender_id: '00000000-0000-0000-0000-000000000000',
         p_receiver_id: '11111111-1111-1111-1111-111111111111',
-        p_amount_rtv: 1000,
+        p_amount_stars: 1000,
         p_type: 'gift',
       }, ANON_KEY);
 
@@ -99,7 +99,7 @@ describe('Rotation Erotica — Security Hardening', () => {
       const { status } = await supabaseRPC('transfer_rtv', {
         p_sender_id: '00000000-0000-0000-0000-000000000000',
         p_receiver_id: '11111111-1111-1111-1111-111111111111',
-        p_amount_rtv: 1,
+        p_amount_stars: 1,
         p_type: 'test',
       }, SERVICE_KEY);
 

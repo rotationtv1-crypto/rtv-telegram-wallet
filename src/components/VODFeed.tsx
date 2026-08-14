@@ -33,7 +33,7 @@ interface VODItem {
   share_count: number;
   save_count: number;
   is_premium: boolean;
-  price_rtv: number;
+  stars: number;
   is_featured: boolean;
   published_at: string;
   creator_username?: string;
@@ -126,7 +126,7 @@ function VODCard({ item, onClick }: { item: VODItem; onClick: (id: string) => vo
         {/* Premium badge */}
         {item.is_premium && (
           <div className="absolute top-2 right-2 bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded-full font-bold">
-            💎 {item.price_rtv} RTV
+            💎 {item.stars} RTV
           </div>
         )}
 

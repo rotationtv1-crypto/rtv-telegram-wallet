@@ -153,7 +153,7 @@ interface TipMessage {
   gift_id: string;
   gift_name: string;
   gift_emoji: string;
-  amount_rtv: number;
+  amount_stars: number;
   amount_usd: number;
   combo_count: number;
   message?: string;
@@ -527,7 +527,7 @@ export default {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount_rtv: body.amount_rtv,
+            amount_stars: body.amount_stars,
             user_id: body.sender_id,
             username: body.sender_id,
             gift_emoji: body.gift_emoji,
@@ -539,7 +539,7 @@ export default {
         user_id: body.sender_id,
         stream_id: body.stream_id,
         creator_id: body.receiver_id,
-        amount_rtv: body.amount_rtv,
+        amount_stars: body.amount_stars,
         amount_usd: body.amount_usd,
         gift_id: body.gift_id,
         ts: Date.now(),
@@ -836,7 +836,7 @@ export default {
           event: "tip_processed",
           actor: tip.sender_id,
           resource: tip.stream_id,
-          data: { amount_rtv: tip.amount_rtv, amount_usd: tip.amount_usd, gift: tip.gift_name },
+          data: { amount_stars: tip.amount_stars, amount_usd: tip.amount_usd, gift: tip.gift_name },
         }, env);
 
         // Forward to payout engine

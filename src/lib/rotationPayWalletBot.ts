@@ -305,7 +305,7 @@ export function createRotationPayWalletBot(env: WalletEnv) {
     await dbInsert(env, "tips", {
       sender_id: sender.id,
       receiver_id: recipientUser.id,
-      amount_rtv: amount,
+      amount_stars: amount,
       amount_usd: amount * 0.01,
       stream_id: "wallet_transfer",
       gift_name: "Direct Transfer",
@@ -373,7 +373,7 @@ export function createRotationPayWalletBot(env: WalletEnv) {
     // Log withdrawal request
     await dbInsert(env, "withdrawals", {
       user_id: user.id,
-      amount_rtv: amount,
+      amount_stars: amount,
       amount_usd: amount * 0.01,
       method,
       status: "pending",
@@ -429,7 +429,7 @@ export function createRotationPayWalletBot(env: WalletEnv) {
     if (!user) return ctx.reply("❌ Wallet not found. Use /start to set up.");
 
     const tips = await dbQuery(env, "tips",
-      `or=(sender_id.eq.${user.id},receiver_id.eq.${user.id})&order=created_at.desc&limit=10&select=amount_rtv,gift_name,created_at,sender_id,receiver_id`
+      `or=(sender_id.eq.${user.id},receiver_id.eq.${user.id})&order=created_at.desc&limit=10&select=amount_stars,gift_name,created_at,sender_id,receiver_id`
     );
 
     if (!tips?.length) {
@@ -441,7 +441,7 @@ export function createRotationPayWalletBot(env: WalletEnv) {
       const arrow = isSent ? "📤" : "📥";
       const sign = isSent ? "-" : "+";
       const date = new Date(t.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      return `${arrow} <b>${sign}${t.amount_rtv} RTVS</b> · ${t.gift_name} · <i>${date}</i>`;
+      return `${arrow} <b>${sign}${t.amount_stars} RTVS</b> · ${t.gift_name} · <i>${date}</i>`;
     }).join("\n");
 
     await ctx.reply(
@@ -573,7 +573,7 @@ export function createRotationPayWalletBot(env: WalletEnv) {
     await dbInsert(env, "tips", {
       sender_id: sender.id,
       receiver_id: creator.id,
-      amount_rtv: amount,
+      amount_stars: amount,
       amount_usd: amount * 0.01,
       stream_id: "telegram_tip",
       gift_name: "Telegram Tip",
@@ -618,10 +618,10 @@ export function createRotationPayWalletBot(env: WalletEnv) {
     }
 
     const tips = await dbQuery(env, "tips",
-      `receiver_id=eq.${user.id}&order=created_at.desc&select=amount_rtv,creator_share,created_at`
+      `receiver_id=eq.${user.id}&order=created_at.desc&select=amount_stars,creator_share,created_at`
     );
 
-    const total = tips?.reduce((sum: number, t: any) => sum + (t.creator_share || t.amount_rtv * 0.8), 0) || 0;
+    const total = tips?.reduce((sum: number, t: any) => sum + (t.creator_share || t.amount_stars * 0.8), 0) || 0;
     const today = tips?.filter((t: any) => new Date(t.created_at) > new Date(Date.now() - 86400000))
       .reduce((sum: number, t: any) => sum + (t.creator_share || 0), 0) || 0;
     const week = tips?.filter((t: any) => new Date(t.created_at) > new Date(Date.now() - 7 * 86400000))
@@ -669,7 +669,7 @@ export function createRotationPayWalletBot(env: WalletEnv) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           creator_id: user.id,
-          amount_rtv: user.rtvs_balance,
+          amount_stars: user.rtvs_balance,
           method: "stripe",
         }),
       });

@@ -29,8 +29,8 @@ interface Film {
   is_free: boolean;
   is_premium: boolean;
   is_pay_per_view: boolean;
-  price_rtv: number;
-  rental_price_rtv: number;
+  stars: number;
+  rental_stars: number;
   tribute_min_rtv: number;
   tribute_suggested_rtv: number;
   view_count: number;
@@ -49,9 +49,9 @@ interface PricingTier {
   tier_slug: string;
   tier_level: number;
   description: string;
-  monthly_price_rtv: number;
+  monthly_stars: number;
   monthly_price_usd: number;
-  annual_price_rtv?: number;
+  annual_stars?: number;
   annual_price_usd?: number;
   max_resolution: string;
   max_streams: number;
@@ -196,13 +196,13 @@ function PricingCard({ tier, current, onSelect }: { tier: PricingTier; current: 
 
       <div className="text-center mb-4">
         <div className="flex items-baseline justify-center gap-1">
-          <span className="text-white text-3xl font-bold">{tier.monthly_price_rtv}</span>
+          <span className="text-white text-3xl font-bold">{tier.monthly_stars}</span>
           <span className="text-purple-400 text-sm">RTV</span>
         </div>
         <p className="text-gray-500 text-xs">${tier.monthly_price_usd}/month</p>
-        {tier.annual_price_rtv && (
+        {tier.annual_stars && (
           <p className="text-green-400 text-[10px] mt-1">
-            Annual: {tier.annual_price_rtv} RTV (save {Math.round((1 - tier.annual_price_rtv! / (tier.monthly_price_rtv * 12)) * 100)}%)
+            Annual: {tier.annual_stars} RTV (save {Math.round((1 - tier.annual_stars! / (tier.monthly_stars * 12)) * 100)}%)
           </p>
         )}
       </div>
@@ -354,7 +354,7 @@ export default function FilmCatalogUI({ userId }: { userId: string }) {
               </button>
             ) : film.is_pay_per_view ? (
               <button className="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-green-500">
-                🎬 Rent for {film.rental_price_rtv} RTV
+                🎬 Rent for {film.rental_stars} RTV
               </button>
             ) : (
               <button className="flex-1 bg-purple-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-purple-500">

@@ -187,7 +187,7 @@ export default async function handler(req: Request): Promise<Response> {
         entity:      "RTVToken",
         actor:       String(tg_id || "user"),
         actor_role:  "user",
-        amount_rtv:  amount,
+        stars: amount,
         rail:        "internal",
         tax_category:"staking_reward",
         is_suspicious: false,

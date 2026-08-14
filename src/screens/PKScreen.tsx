@@ -32,7 +32,7 @@ export function PKScreen() {
             </div>
             <div className="text-center">
               <Swords size={24} color="#FF6B6B" />
-              <div className="text-yellow-400 text-sm font-bold mt-1">{b.stake_amount_rtv} RTV</div>
+              <div className="text-yellow-400 text-sm font-bold mt-1">{b.stake_amount_stars} RTV</div>
             </div>
             <div className="text-center">
               <div className="text-white font-bold">Opponent</div>

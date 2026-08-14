@@ -41,7 +41,7 @@ interface Gift {
   id: string;
   emoji: string;
   name: string;
-  price_rtv: number;
+  stars: number;
   animation: string;
 }
 
@@ -65,12 +65,12 @@ const T = {
 
 // ── Mock data ──────────────────────────────────────────────────────────────
 const GIFTS: Gift[] = [
-  { id: "rose", emoji: "🌹", name: "Rose", price_rtv: 10, animation: "float" },
-  { id: "fire", emoji: "🔥", name: "Fire", price_rtv: 50, animation: "burst" },
-  { id: "diamond", emoji: "💎", name: "Diamond", price_rtv: 200, animation: "sparkle" },
-  { id: "crown", emoji: "👑", name: "Crown", price_rtv: 500, animation: "crown" },
-  { id: "rocket", emoji: "🚀", name: "Rocket", price_rtv: 1000, animation: "launch" },
-  { id: "heart", emoji: "❤️‍🔥", name: "Burning Heart", price_rtv: 100, animation: "pulse" },
+  { id: "rose", emoji: "🌹", name: "Rose", stars: 10, animation: "float" },
+  { id: "fire", emoji: "🔥", name: "Fire", stars: 50, animation: "burst" },
+  { id: "diamond", emoji: "💎", name: "Diamond", stars: 200, animation: "sparkle" },
+  { id: "crown", emoji: "👑", name: "Crown", stars: 500, animation: "crown" },
+  { id: "rocket", emoji: "🚀", name: "Rocket", stars: 1000, animation: "launch" },
+  { id: "heart", emoji: "❤️‍🔥", name: "Burning Heart", stars: 100, animation: "pulse" },
 ];
 
 const MOCK_CREATORS: Creator[] = [
@@ -121,7 +121,7 @@ function LivePreviewCard({ creator, onEnter }: { creator: Creator; onEnter: () =
         text: isGift ? `sent ${gift.name}!` : msgs[Math.floor(Math.random() * msgs.length)],
         is_gift: isGift,
         gift_emoji: isGift ? gift.emoji : undefined,
-        gift_amount: isGift ? gift.price_rtv : undefined,
+        gift_amount: isGift ? gift.stars : undefined,
         color: isGift ? T.warning : undefined,
         ts: Date.now(),
       };
@@ -325,7 +325,7 @@ function GiftPanel({ onSend, balance }: { onSend: (gift: Gift) => void; balance:
           >
             <span style={{ fontSize: 22 }}>{gift.emoji}</span>
             <span style={{ color: T.text, fontSize: 10, fontWeight: 600 }}>{gift.name}</span>
-            <span style={{ color: T.warning, fontSize: 10 }}>{gift.price_rtv} RTVS</span>
+            <span style={{ color: T.warning, fontSize: 10 }}>{gift.stars} RTVS</span>
           </motion.button>
         ))}
       </div>
@@ -492,8 +492,8 @@ export default function RotationEroticaApp() {
   const [floatingGifts, setFloatingGifts] = useState<Array<{ id: string; emoji: string; x: number }>>([]);
 
   const sendGift = (gift: Gift) => {
-    if (balance < gift.price_rtv) return;
-    setBalance(b => b - gift.price_rtv);
+    if (balance < gift.stars) return;
+    setBalance(b => b - gift.stars);
     const anim = { id: crypto.randomUUID(), emoji: gift.emoji, x: Math.random() * 80 + 10 };
     setFloatingGifts(f => [...f, anim]);
     setTimeout(() => setFloatingGifts(f => f.filter(g => g.id !== anim.id)), 2000);
