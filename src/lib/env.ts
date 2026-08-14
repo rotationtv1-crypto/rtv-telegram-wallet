@@ -21,7 +21,7 @@ export function getEnv(env: Record<string, string | undefined>) {
     VENICE_API_KEY: env.VENICE_API_KEY || '',
     KIMI_API_KEY: env.KIMI_API_KEY || '',
     // RTV Economics
-    RTV_PARITY: 0.01, // 1 RTV = $0.01 USD
+    STARS_USD_VALUE: 0.013, // 1 Star = $0.013 USD
     STAR_USD: 0.013,  // 1 Telegram Star = $0.013 USD
     TON_USD: 1.5,     // 1 TON ≈ $1.50 USD
     // Revenue Split (Sovereign)

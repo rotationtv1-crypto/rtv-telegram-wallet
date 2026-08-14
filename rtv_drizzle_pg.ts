@@ -39,7 +39,7 @@ export function getDb() {
 export async function createPaymentTransaction(data: {
   user_id: string;
   amount_usd: number;
-  payment_rail: "telegram_stars" | "ton_jetton" | "internal_rtv";
+  payment_rail: "telegram_stars" | "usdt_ton_connect";
   tx_type: "purchase" | "payout" | "reward" | "transfer";
   signature?: string;
 }) {
@@ -54,7 +54,7 @@ export async function createPaymentTransaction(data: {
     paymentRail: data.payment_rail,
     txType: data.tx_type,
     signature: data.signature || null,
-    blockchainConfirmed: data.payment_rail !== "internal_rtv",
+    blockchainConfirmed: data.payment_rail === "telegram_stars",
     status: "pending",
     timestamp: new Date(),
   }).returning();

@@ -122,7 +122,7 @@ export async function logTransaction(tx: {
   user_id?: string;
   amount: number;
   currency: string;
-  payment_rail: 'telegram_stars' | 'ton_jetton' | 'internal_rtv';
+  payment_rail: 'telegram_stars' | 'usdt_ton_connect';
   tx_type: string;
   signature?: string;
   status: string;
@@ -133,7 +133,7 @@ export async function logTransaction(tx: {
     .insert({
       ...tx,
       amount_stars: Math.floor(tx.amount * 100), // 1 RTV = $0.01
-      blockchain_confirmed: tx.payment_rail !== 'internal_rtv',
+      blockchain_confirmed: tx.payment_rail === 'telegram_stars',
       timestamp: new Date().toISOString(),
     });
   
