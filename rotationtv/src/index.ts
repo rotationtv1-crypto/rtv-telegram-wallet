@@ -73,6 +73,8 @@ export { StreamRoom };
 export { RTVStreamAgent };
 export { CreatorPayoutWorkflow };
 
+import { createStarsInvoice, sendStarsInvoice, answerPreCheckout, handlePaymentUpdate, STARS_CATALOG, buildOrderPayload, findCatalogItem } from "./lib/telegramStars";
+
 // ─── ENVIRONMENT ──────────────────────────────────────────────────────────────
 
 interface Env {
@@ -191,38 +193,28 @@ export default {
     // ── CORS preflight ──────────────────────────────────────────────────────
     if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
 
-    // ── Health check ────────────────────────────────────────────────────────
+    // ── Root: serve Mini App HTML (static assets) ─────────────────────────────
+    // ── Root: Serve Mini App (static assets) ───────────────────────────────
     if (pathname === "/") {
+      return env.ASSETS.fetch(request);
+    }
+
+    // ── API Health Check ───────────────────────────────────────────────────
+    if (pathname === "/api/health") {
       return json({
-        status: "ok",
-        service: "rotationtv-live-ai-clones",
-        version: "6.1.0",
+        status: "ok", service: "rotationtv-live-ai-clones", version: "7.0.0",
         account: "947b01a53876bee16fa0e8360c880aca",
         presidential_authority: "Darrel",
         ai_providers: ["openai", "kimi", "venice", "cloudflare_workers_ai"],
-        endpoints: [
-          "/api/stream/*",
-          "/api/payout/*",
-          "/api/kimi/*",
-          "/api/venice/*",
-          "/api/ton/*",
-          "/api/solana/*",
-          "/api/bridge/*",
-          "/api/spend/dashboard",
-          "/api/admin/*",
-          "/api/tribute/*",
-          "/api/chat",
-          "/api/auth/telegram",
-          "/api/encode-state",
-          "/api/venice/inference",
-          "/api/stream/orchestrate/init",
-          "/api/stream/orchestrate/end",
-          "/api/stream/active",
-        ],
+        features: { orchestrator: true, stars_payments: true, stream_webrtc: true, multi_bot: true, web_app: true },
+        bots: { main: "@base44_229784_bot", erotica: "@RotationtvErotica_Bot" },
+        endpoints: ["/api/stream/*", "/api/payout/*", "/api/kimi/*", "/api/venice/*", "/api/ton/*", "/api/solana/*", "/api/bridge/*", "/api/spend/dashboard", "/api/admin/*", "/api/tribute/*", "/api/chat", "/api/auth/telegram", "/api/encode-state", "/api/venice/inference", "/api/stream/orchestrate/init", "/api/stream/orchestrate/end", "/api/stream/active", "/api/orchestrator/*", "/api/stars/invoice", "/api/stars/catalog"],
         workers_dev: "https://rotationtv-live-ai-clones.rotationtimmy.workers.dev",
         supabase: env.SUPABASE_URL ?? "not set",
+        entity: "Darrel-spell-living-trust",
       });
     }
+
 
     // ── Agents (RTVStreamAgent DO) ───────────────────────────────────────────
     if (pathname.startsWith("/agent/")) {
@@ -422,6 +414,56 @@ export default {
     // ── Stream lifecycle ─────────────────────────────────────────────────────
 
     // ── Venice AI direct inference (multi-key router) ──────────────────────
+
+    // ── POST /api/stars/invoice — Create Telegram Stars invoice ──────────
+    if (pathname === "/api/stars/invoice" && request.method === "POST") {
+      const body = await request.json() as any;
+      const botToken = env.TELEGRAM_BOT_TOKEN_6 || env.TELEGRAM_BOT_TOKEN || "";
+      const item = findCatalogItem(body.item_id) || { id: body.item_id || "custom", label: body.title || "Item", stars: body.stars_amount || 1 };
+      try {
+        const result = await createStarsInvoice(botToken, {
+          title: body.title || (item as any).label,
+          description: body.description || `Purchase ${(item as any).label}`,
+          payload: buildOrderPayload({ type: body.type || "gift", item_id: (item as any).id, user_id: body.user_id }),
+          prices: [{ amount: (item as any).stars, label: (item as any).label }],
+        });
+        return json(result);
+      } catch (e: any) {
+        return json({ ok: false, error: e.message || "invoice_failed" });
+      }
+    }
+
+    // ── GET /api/stars/catalog — Stars pricing catalog ────────────────────
+    if (pathname === "/api/stars/catalog" && request.method === "GET") {
+      return json({ ok: true, catalog: STARS_CATALOG, currency: "XTR" });
+    }
+
+    // ── POST /api/auth/web — Standalone Web Auth ──────────────────────────
+    if (pathname === "/api/auth/web" && request.method === "POST") {
+      const body = await request.json() as any;
+      const initData = body.initData || "";
+      const params = new URLSearchParams(initData);
+      const userStr = params.get("user");
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          return json({ ok: true, user: { id: String(user.id), telegram_id: user.id, username: user.username || "", display_name: user.first_name || "User", stars_balance: 0, subscription: "free" }, token: "web-session-" + user.id });
+        } catch { return json({ ok: false, error: "invalid_user" }); }
+      }
+      return json({ ok: false, error: "no_init_data" });
+    }
+
+    // ── GET /api/auth/verify — Verify Web JWT ─────────────────────────────
+    if (pathname === "/api/auth/verify" && request.method === "GET") {
+      const auth = request.headers.get("Authorization") || "";
+      const token = auth.replace("Bearer ", "");
+      if (token.startsWith("web-session-")) {
+        const userId = token.replace("web-session-", "");
+        return json({ ok: true, user: { id: userId, stars_balance: 0, subscription: "free" } });
+      }
+      return json({ ok: false, error: "invalid_token" });
+    }
+
     if (pathname === "/api/venice/inference" && request.method === "POST") {
       const body = await request.json<{ prompt: string; model?: string }>();
       if (!body.prompt) return json({ error: "Missing prompt" }, 400);
@@ -768,6 +810,11 @@ export default {
     }
 
     // ── Static assets (SPA fallback) ─────────────────────────────────────────
+    // ── Static Assets (Mini App) ─────────────────────────────────────────────
+    if (!pathname.startsWith("/api/") && !pathname.startsWith("/telegram/") && !pathname.startsWith("/stream/")) {
+      return env.ASSETS.fetch(request);
+    }
+
     return env.ASSETS.fetch(request);
   },
 

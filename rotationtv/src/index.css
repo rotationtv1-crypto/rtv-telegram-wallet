@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+* { -webkit-tap-highlight-color: transparent; }
+body { margin: 0; overscroll-behavior: none; }
+::-webkit-scrollbar { width: 0; }

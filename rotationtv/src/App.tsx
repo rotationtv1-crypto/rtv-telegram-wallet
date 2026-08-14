@@ -1,3 +1,4 @@
+import "./index.css";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Compass, Gift, Trophy, Wallet, User, X } from "lucide-react";
