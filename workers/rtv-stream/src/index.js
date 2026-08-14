@@ -30,7 +30,7 @@ export default {
         version: env.RTV_VERSION,
         service: 'rtv-stream',
         features: ['live_stream', 'cloudflare_stream', 'creator_tips', 'pk_battles', 'subscriptions', 'gifts', 'ccbill', 'tribute', 'telegram_stars', 'ton_jetton'],
-        parity: env.RTV_PARITY
+        parity: 'Telegram Stars (XTR) only'
       });
     }
 
@@ -106,12 +106,12 @@ export default {
     if (path === '/api/gifts' && method === 'GET') {
       return jsonResponse({
         gifts: [
-          { id: 'rose', name: 'Rose', emoji: '🌹', price_rtv: 10, price_usd: 0.10 },
-          { id: 'heart', name: 'Heart', emoji: '❤️', price_rtv: 50, price_usd: 0.50 },
-          { id: 'diamond', name: 'Diamond', emoji: '💎', price_rtv: 500, price_usd: 5.00 },
-          { id: 'crown', name: 'Crown', emoji: '👑', price_rtv: 1000, price_usd: 10.00 },
-          { id: 'galaxy', name: 'Galaxy', emoji: '🌌', price_rtv: 5000, price_usd: 50.00 },
-          { id: 'universe', name: 'Universe', emoji: '🎆', price_rtv: 10000, price_usd: 100.00 }
+          { id: 'rose', name: 'Rose', emoji: '🌹', stars: 1, currency: 'XTR' },
+          { id: 'heart', name: 'Heart', emoji: '❤️', stars: 5, currency: 'XTR' },
+          { id: 'diamond', name: 'Diamond', emoji: '💎', stars: 50, currency: 'XTR' },
+          { id: 'crown', name: 'Crown', emoji: '👑', stars: 100, currency: 'XTR' },
+          { id: 'galaxy', name: 'Galaxy', emoji: '🌌', stars: 500, currency: 'XTR' },
+          { id: 'universe', name: 'Universe', emoji: '🎆', stars: 999, currency: 'XTR' }
         ]
       });
     }
@@ -135,10 +135,10 @@ export default {
     if (path === '/api/subscriptions/tiers' && method === 'GET') {
       return jsonResponse({
         tiers: [
-          { tier: 'bronze', price_usd: 4.99, price_rtv: 499, perks: ['Badge', 'Priority chat'] },
-          { tier: 'silver', price_usd: 9.99, price_rtv: 999, perks: ['Badge', 'Priority chat', 'Exclusive content'] },
-          { tier: 'gold', price_usd: 19.99, price_rtv: 1999, perks: ['Badge', 'Priority chat', 'Exclusive content', 'DM access', 'Free gifts'] },
-          { tier: 'platinum', price_usd: 49.99, price_rtv: 4999, perks: ['All perks', 'Personal calls', 'Custom gifts'] }
+          { tier: 'bronze', stars: 100, price_usd: 4.99, perks: ['Badge', 'Priority chat'] },
+          { tier: 'silver', stars: 200, price_usd: 9.99, perks: ['Badge', 'Priority chat', 'Exclusive content'] },
+          { tier: 'gold', stars: 500, price_usd: 19.99, perks: ['Badge', 'Priority chat', 'Exclusive content', 'DM access', 'Free gifts'] },
+          { tier: 'platinum', stars: 999, price_usd: 49.99, perks: ['All perks', 'Personal calls', 'Custom gifts'] }
         ]
       });
     }

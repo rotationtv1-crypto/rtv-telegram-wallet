@@ -1,4 +1,4 @@
-// RTV Mini App — Self-contained HTML served as a backend function
+// Stars Mini App — Self-contained HTML served as a backend function
 // Opens inside Telegram as a Mini App
 
 Deno.serve(async (req) => {
@@ -84,7 +84,7 @@ body { background: #0A0A0A; color: #fff; font-family: -apple-system, BlinkMacSys
 <!-- HOME -->
 <div id="screen-home" class="screen active">
   <div class="card glow" style="text-align:center;padding:24px">
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">RTV BALANCE</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Stars BALANCE</div>
     <div id="home-balance" class="bal-num">...</div>
     <div id="home-usd" class="bal-usd">≈ $0.00 USD</div>
     <div style="display:flex;gap:8px;margin-top:16px">
@@ -147,7 +147,7 @@ body { background: #0A0A0A; color: #fff; font-family: -apple-system, BlinkMacSys
 <div id="screen-gifts" class="screen">
   <div class="card" style="text-align:center;padding:20px">
     <div style="font-size:22px;font-weight:800">Send Gifts</div>
-    <div style="font-size:12px;color:var(--sub);margin-top:4px">1 RTV = $0.01 · Combo multipliers apply</div>
+    <div style="font-size:12px;color:var(--sub);margin-top:4px">1 Stars = $0.01 · Combo multipliers apply</div>
   </div>
   <div id="gifts-grid" class="grid3"></div>
   <div id="gift-detail" style="display:none"></div>
@@ -170,13 +170,13 @@ body { background: #0A0A0A; color: #fff; font-family: -apple-system, BlinkMacSys
     <div id="wallet-usd" class="bal-usd">≈ $0.00 USD</div>
   </div>
   <div class="grid2">
-    <div class="card stat-box"><div id="wallet-pending" class="stat-val" style="color:var(--blue)">0</div><div class="stat-label">Pending RTV</div></div>
+    <div class="card stat-box"><div id="wallet-pending" class="stat-val" style="color:var(--blue)">0</div><div class="stat-label">Pending Stars</div></div>
     <div class="card stat-box"><div id="wallet-earned" class="stat-val" style="color:var(--neon)">0</div><div class="stat-label">Total Earned</div></div>
   </div>
   <div class="card">
     <div style="font-size:12px;font-weight:700;margin-bottom:10px">Quick Actions</div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="btn btn-primary btn-small" onclick="openLink('https://rotationtvai.com/wallet')">📥 Deposit RTV</button>
+      <button class="btn btn-primary btn-small" onclick="openLink('https://rotationtvai.com/wallet')">📥 Deposit Stars</button>
       <button class="btn btn-blue btn-small" onclick="openLink('https://rotationtvai.com/wallet')">📤 Withdraw</button>
     </div>
   </div>
@@ -190,7 +190,7 @@ body { background: #0A0A0A; color: #fff; font-family: -apple-system, BlinkMacSys
 <div id="screen-profile" class="screen">
   <div class="card glow" style="text-align:center;padding:24px">
     <div style="width:72px;height:72px;border-radius:50%;margin:0 auto 12px;background:linear-gradient(135deg,#CCFF00,#00BFFF);display:flex;align-items:center;justify-content:center;font-size:32px">👤</div>
-    <div id="prof-name" style="font-size:18px;font-weight:800">RTV User</div>
+    <div id="prof-name" style="font-size:18px;font-weight:800">Stars User</div>
     <div id="prof-username" style="font-size:12px;color:var(--sub);margin-top:2px">@unknown</div>
     <div style="display:flex;gap:6px;justify-content:center;margin-top:8px" id="prof-badges"></div>
   </div>
@@ -280,7 +280,7 @@ function updateBalance(u) {
 }
 
 function updateProfile(u) {
-  document.getElementById('prof-name').textContent = u.display_name||u.username||'RTV User';
+  document.getElementById('prof-name').textContent = u.display_name||u.username||'Stars User';
   document.getElementById('prof-username').textContent = '@'+(u.username||'unknown');
   let badges = '';
   badges += '<span class="badge">'+(u.loyalty_tier||'bronze')+'</span>';
@@ -304,7 +304,7 @@ function renderGifts() {
     '<div class="gift-item" onclick="selectGift('+JSON.stringify(g).replace(/"/g,'&quot;')+')" data-id="'+g.id+'">'+
     '<div class="gift-emoji">'+g.emoji+'</div>'+
     '<div class="gift-name">'+g.name+'</div>'+
-    '<div class="gift-price">'+fmt0(g.price_rtv)+' RTV</div>'+
+    '<div class="gift-price">'+fmt0(g.g.stars)+' Stars</div>'+
     '<div class="gift-usd">$'+fmt(g.price_usd)+'</div></div>'
   ).join('');
 }
@@ -319,10 +319,10 @@ function selectGift(g) {
     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
     '<span style="font-size:32px">'+g.emoji+'</span>'+
     '<div><div style="font-size:14px;font-weight:800">'+g.name+'</div>'+
-    '<div style="font-size:11px;color:var(--neon)">'+fmt0(g.price_rtv*combo)+' RTV ($'+fmt(g.price_usd*combo)+')</div></div></div>'+
+    '<div style="font-size:11px;color:var(--neon)">'+fmt0(g.g.stars*combo)+' Stars ($'+fmt(g.price_usd*combo)+')</div></div></div>'+
     '<div style="margin-bottom:12px"><div style="font-size:11px;color:var(--muted);margin-bottom:6px">Combo: '+combo+'x</div>'+
     '<input type="range" min="1" max="100" value="1" style="width:100%;accent-color:#CCFF00" onchange="updateCombo(this.value,'+JSON.stringify(g).replace(/"/g,'&quot;')+')" /></div>'+
-    '<button class="btn btn-primary" onclick="sendGift()">Send '+fmt0(g.price_rtv)+' RTV</button></div>';
+    '<button class="btn btn-primary" onclick="sendGift()">Send '+fmt0(g.g.stars)+' Stars</button></div>';
 }
 
 function updateCombo(v,g) {
@@ -331,17 +331,17 @@ function updateCombo(v,g) {
   if(d) {
     d.querySelector('.neon-price')?.remove();
     const btn=d.querySelector('button');
-    if(btn) btn.textContent='Send '+fmt0(g.price_rtv*combo)+' RTV';
+    if(btn) btn.textContent='Send '+fmt0(g.g.stars*combo)+' Stars';
     const priceEl=d.querySelector('div[style*="color:var(--neon)"]');
-    if(priceEl) priceEl.textContent=fmt0(g.price_rtv*combo)+' RTV ($'+fmt(g.price_usd*combo)+')';
+    if(priceEl) priceEl.textContent=fmt0(g.g.stars*combo)+' Stars ($'+fmt(g.price_usd*combo)+')';
   }
 }
 
 async function sendGift() {
   if(!selectedGift) return;
-  showToast('Sending '+fmt0(selectedGift.price_rtv*combo)+' RTV...');
-  const res = await apiCall('rtvPayoutEngine',{action:'process_tip',gift_id:selectedGift.id,gift_name:selectedGift.name,amount_rtv:selectedGift.price_rtv*combo,combo_count:combo,sender_id:tgUser?.id});
-  if(res?.success) showToast('Sent '+fmt0(selectedGift.price_rtv*combo)+' RTV '+selectedGift.emoji+'!');
+  showToast('Sending '+fmt0(selectedGift.g.stars*combo)+' Stars...');
+  const res = await apiCall('starsPayment',gift_id:selectedGift.id,gift_name:selectedGift.name,amount_rtv:selectedGift.g.stars*combo,combo_count:combo,sender_id:tgUser?.id});
+  if(res?.success) showToast('Sent '+fmt0(selectedGift.g.stars*combo)+' Stars '+selectedGift.emoji+'!');
   else showToast(res?.error||'Gift failed');
   document.getElementById('gift-detail').style.display='none';
 }
@@ -353,7 +353,7 @@ function renderTiers() {
     '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:24px">'+(t.badge_emoji||'⭐')+'</span>'+
     '<span style="font-size:16px;font-weight:800;text-transform:capitalize">'+t.tier_name+'</span></div>'+
     '<div style="text-align:right"><div style="font-size:18px;font-weight:800;color:var(--neon)">$'+fmt(t.price_usd_monthly)+'</div>'+
-    '<div style="font-size:10px;color:var(--muted)">/mo · '+fmt0(t.price_rtv_monthly)+' RTV</div></div></div>'+
+    '<div style="font-size:10px;color:var(--muted)">/mo · '+fmt0(t.g.stars_monthly)+' Stars</div></div></div>'+
     (t.perks?'<div style="margin-bottom:10px">'+t.perks.slice(0,4).map(p=>'<div style="font-size:11px;color:var(--sub);margin-bottom:2px">✓ '+p+'</div>').join('')+'</div>':'')+
     '<button class="btn btn-primary btn-small" onclick="subscribe('+JSON.stringify(t).replace(/"/g,'&quot;')+')">Subscribe '+(t.badge_emoji||'⭐')+'</button></div>'
   ).join('');
@@ -361,7 +361,7 @@ function renderTiers() {
 
 async function subscribe(t) {
   showToast('Subscribing to '+t.tier_name+'...');
-  const res = await apiCall('rtvPayoutEngine',{action:'subscribe',tier:t.tier_name,price_usd:t.price_usd_monthly,price_rtv:t.price_rtv_monthly,subscriber_id:tgUser?.id});
+  const res = await apiCall('rtvPayoutEngine',{action:'subscribe',tier:t.tier_name,price_usd:t.price_usd_monthly,g.stars:t.g.stars_monthly,subscriber_id:tgUser?.id});
   if(res?.success) showToast('Subscribed to '+t.tier_name+' '+(t.badge_emoji||'⭐'));
   else showToast(res?.error||'Subscribe failed');
 }
@@ -378,7 +378,7 @@ function renderStreams() {
     (s.status==='live'?'<span style="background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px">LIVE</span>':'')+
     '<span style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(s.title||'Untitled')+'</span></div>'+
     '<div style="font-size:11px;color:var(--sub)">'+(s.category||'General')+' · '+(s.viewer_count||0)+' viewers</div>'+
-    (s.total_tips_rtv>0?'<div style="font-size:10px;color:var(--neon);margin-top:4px">🎁 '+fmt0(s.total_tips_rtv)+' RTV tipped</div>':'')+
+    (s.total_tips_rtv>0?'<div style="font-size:10px;color:var(--neon);margin-top:4px">🎁 '+fmt0(s.total_tips_rtv)+' Stars tipped</div>':'')+
     '</div></div></div>'
   ).join('');
 }

@@ -9,7 +9,7 @@
   },
   "vars": {
     "RTV_VERSION": "3.0.0",
-    "RTV_PARITY": "1 RTV = 0.01 USD"
+    "PAYMENT_RAIL": "telegram_stars"
   },
   "workers_dev": true
 }

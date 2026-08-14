@@ -1,3 +1,5 @@
+> ⚠️ **DEPRECATED**: This document references the old RTV token model. The system now uses Telegram Stars (XTR) + USDT (TON Connect) only. See commit 34bb9d7 for the migration.
+
 # RotationTV Network — Full Launch Playbook v4
 ## "First TV on Telegram" — Tubi-Scale Persistent Feed + Live Streaming + AI Content
 

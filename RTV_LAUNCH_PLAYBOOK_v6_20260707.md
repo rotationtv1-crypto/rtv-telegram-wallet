@@ -1,3 +1,5 @@
+> ⚠️ **DEPRECATED**: This document references the old RTV token model. The system now uses Telegram Stars (XTR) + USDT (TON Connect) only. See commit 34bb9d7 for the migration.
+
 # RTV ECOSYSTEM — COMPLETE LAUNCH PLAYBOOK v6
 # Date: 2026-07-07 — LAUNCH DAY
 # Consolidated: Mira + Kimi + Claude + Deep Research

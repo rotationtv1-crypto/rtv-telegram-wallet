@@ -34,7 +34,7 @@ rotationtv1-crypto/rtv-telegram-wallet
 
 ## Economics
 
-- 1 RTV = $0.01 USD (fixed parity)
+- Telegram Stars (XTR) + USDT (TON Connect) — no internal token
 - 1 Telegram Star = $0.013 USD → 1.3 RTV
 - 1 TON ≈ $1.50 USD → 150 RTV
 - Revenue split: 80% creator / 15% platform / 5% agency

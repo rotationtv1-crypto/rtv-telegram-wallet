@@ -1,3 +1,5 @@
+> ⚠️ **DEPRECATED**: This document references the old RTV token model. The system now uses Telegram Stars (XTR) + USDT (TON Connect) only. See commit 34bb9d7 for the migration.
+
 # SOVEREIGN PAYMENT SYSTEM PLAYBOOK
 ## RotationTV Network (RTV) — Telegram Stars + TON Blockchain
 

@@ -63,5 +63,5 @@ export type EntityName = keyof typeof ENTITIES;
 /**
  * Sovereign payment rails (Stripe PURGED)
  */
-export const SOVEREIGN_RAILS = ['telegram_stars', 'ton_jetton', 'internal_rtv'] as const;
+export const SOVEREIGN_RAILS = ['telegram_stars', 'usdt_ton_connect'] as const;
 export const PURGED_RAILS = ['stripe', 'paypal', 'venmo', 'zelle', 'coinbase', 'nmi', 'solana'] as const;
