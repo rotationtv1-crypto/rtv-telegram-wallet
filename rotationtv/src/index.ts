@@ -1,3 +1,4 @@
+import { provisionBot, provisionFromTemplate, probeBot, autoRecoverBot, probeFleet, recoverFleet, autoApproveStarsPayment, broadcastToBots, REGIONAL_BOT_TEMPLATES } from "./lib/botAutonomy";
 /**
  * ROTATIONTVNETWORK LLC — MAIN CLOUDFLARE WORKER
  * Version: 6.4.0 — Full Production Build
@@ -414,6 +415,76 @@ export default {
     // ── Stream lifecycle ─────────────────────────────────────────────────────
 
     // ── Venice AI direct inference (multi-key router) ──────────────────────
+
+
+    // ── Bot Autonomy: Provision ─────────────────────────────────────────────
+    if (pathname === "/api/bot/provision" && request.method === "POST") {
+      const body = await request.json() as any;
+      const miniAppUrl = "https://rotationtv-live-ai-clones.rotationtimmy.workers.dev";
+      const webhookSecret = env.REQUEST_SIGNING_SECRET || "rtv_webhook_secret_2026";
+      
+      if (body.template) {
+        // Provision from template (regional, main, erotica, etc.)
+        const result = await provisionFromTemplate(body.template, body.token, miniAppUrl, webhookSecret, body.username || "");
+        return json(result);
+      } else {
+        // Full custom config
+        const result = await provisionBot({
+          ...body,
+          miniAppUrl,
+          webhookSecret,
+          menuButton: { text: body.menu_text || "🔴 Open App", url: miniAppUrl },
+        });
+        return json(result);
+      }
+    }
+
+    // ── Bot Autonomy: Health Probe (single or fleet) ────────────────────────
+    if (pathname === "/api/bot/health" && request.method === "POST") {
+      const body = await request.json() as any;
+      if (Array.isArray(body.tokens)) {
+        const results = await probeFleet(body.tokens.map((t: string) => ({ token: t, meta: body.meta })));
+        return json({ ok: true, fleet: results });
+      } else {
+        const result = await probeBot(body.token, body.meta);
+        return json({ ok: true, health: result });
+      }
+    }
+
+    // ── Bot Autonomy: Auto-Recovery ─────────────────────────────────────────
+    if (pathname === "/api/bot/recover" && request.method === "POST") {
+      const body = await request.json() as any;
+      if (Array.isArray(body.bots)) {
+        const results = await recoverFleet(body.bots);
+        return json({ ok: true, results });
+      } else {
+        const result = await autoRecoverBot(body);
+        return json({ ok: true, recovery: result });
+      }
+    }
+
+    // ── Bot Autonomy: List Templates ────────────────────────────────────────
+    if (pathname === "/api/bot/templates" && request.method === "GET") {
+      return json({
+        ok: true,
+        templates: Object.keys(REGIONAL_BOT_TEMPLATES).map(k => ({
+          id: k,
+          name: (REGIONAL_BOT_TEMPLATES as any)[k].name,
+          category: (REGIONAL_BOT_TEMPLATES as any)[k].category,
+          countries: (REGIONAL_BOT_TEMPLATES as any)[k].countries,
+          language: (REGIONAL_BOT_TEMPLATES as any)[k].language,
+          nsfw: (REGIONAL_BOT_TEMPLATES as any)[k].nsfw || false,
+        })),
+      });
+    }
+
+    // ── Bot Autonomy: Broadcast ─────────────────────────────────────────────
+    if (pathname === "/api/bot/broadcast" && request.method === "POST") {
+      const body = await request.json() as any;
+      const results = await broadcastToBots(body.tokens, body.chat_id, body.message);
+      return json({ ok: true, results });
+    }
+
 
     // ── POST /api/stars/invoice — Create Telegram Stars invoice ──────────
     if (pathname === "/api/stars/invoice" && request.method === "POST") {
