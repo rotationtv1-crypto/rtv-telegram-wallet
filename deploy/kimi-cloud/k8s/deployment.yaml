@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtv-kimi-cloud
+  labels:
+    app: rtv-kimi-cloud
+    entity: darrel-spell-living-trust
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rtv-kimi-cloud
+  template:
+    metadata:
+      labels:
+        app: rtv-kimi-cloud
+    spec:
+      containers:
+        - name: worker
+          image: rotationtv1-crypto/rtv-kimi-cloud:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - secretRef:
+                name: rtv-kimi-cloud-secrets
+          env:
+            - name: PORT
+              value: "8080"
+            - name: NODE_ENV
+              value: production
+          readinessProbe:
+            httpGet:
+              path: /api/kimi/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/kimi/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
