@@ -1,0 +1,46 @@
+# RotationTV Gitleaks Configuration
+title = "RTV Secret Scanner"
+
+[allowlist]
+description = "Allowlisted paths"
+paths = [
+  '''node_modules/.*''',
+  '''\.lock$''',
+  '''package-lock\.json''',
+]
+
+[[rules]]
+id = "telegram-bot-token"
+description = "Telegram Bot Token"
+regex = '''\b[0-9]{8,12}:[A-Za-z0-9_-]{35,50}\b'''
+tags = ["telegram", "token"]
+
+[[rules]]
+id = "cloudflare-api-token"
+description = "Cloudflare API Token"
+regex = '''cf[a-z]t_[A-Za-z0-9]{20,60}'''
+tags = ["cloudflare", "token"]
+
+[[rules]]
+id = "supabase-jwt"
+description = "Supabase JWT Key"
+regex = '''eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}'''
+tags = ["supabase", "jwt"]
+
+[[rules]]
+id = "venice-api-key"
+description = "Venice API Key"
+regex = '''sk_V[0-9]_[A-Za-z0-9]{20,}'''
+tags = ["venice", "api-key"]
+
+[[rules]]
+id = "stripe-key"
+description = "Stripe API Key"
+regex = '''(sk|pk)_(live|test)_[A-Za-z0-9]{20,}'''
+tags = ["stripe", "api-key"]
+
+[[rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''-----BEGIN [A-Z ]*PRIVATE KEY-----'''
+tags = ["private-key"]

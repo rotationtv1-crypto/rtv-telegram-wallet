@@ -1,0 +1,103 @@
+# RotationTV — Security-Gated CI/CD Pipeline
+# Scans for secrets on every push/PR, blocks deploy if any leak is found
+# Entity: Darrel-spell-living-trust
+
+name: Security-Gated Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Stage 1: Secret Scan (blocks everything if secrets found) ────────
+  secret-scan:
+    name: 🔐 Secret Detection
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for scanning
+
+      - name: Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+      - name: RTV custom pattern scan
+        run: |
+          echo "Scanning all files for RTV-specific secret patterns..."
+          PATTERNS=(
+            '[0-9]\{8,12\}:[A-Za-z0-9_-]\{35,\}'
+            'cfat_[A-Za-z0-9]\{20,\}'
+            'cfut_[A-Za-z0-9]\{20,\}'
+            'eyJ[A-Za-z0-9_-]\{20,\}\.[A-Za-z0-9_-]\{20,\}\.[A-Za-z0-9_-]\{20,\}'
+            'sk_V[0-9]_[A-Za-z0-9]\{20,\}'
+            'sk_live_[A-Za-z0-9]\{20,\}'
+            'ghp_[A-Za-z0-9]\{30,\}'
+          )
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            MATCH=$(grep -rE "$pattern" --include='*.ts' --include='*.tsx' --include='*.js' --include='*.json' --include='*.yml' --include='*.yaml' --include='*.sh' --include='*.md' --include='*.txt' . | grep -v 'node_modules' | grep -v '\.lock' | grep -v 'package-lock' || true)
+            if [ -n "$MATCH" ]; then
+              echo "❌ LEAK DETECTED with pattern: $pattern"
+              echo "$MATCH" | head -5
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" -eq 1 ]; then
+            echo ""
+            echo "🚫 SECURITY GATE FAILED — Secrets detected in codebase."
+            echo "   Remove all hardcoded secrets and use environment variables."
+            exit 1
+          fi
+          echo "✅ No secrets detected — security gate passed."
+
+  # ── Stage 2: Build & Type Check ──────────────────────────────────────
+  build:
+    name: 🏗️ Build & Type Check
+    runs-on: ubuntu-latest
+    needs: secret-scan
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: npx tsc --noEmit || true  # non-blocking type check
+
+  # ── Stage 3: Deploy (only on main, after security + build pass) ──────
+  deploy:
+    name: 🚀 Deploy to Cloudflare
+    runs-on: ubuntu-latest
+    needs: [secret-scan, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+        continue-on-error: true  # Don't fail workflow if CF token not set
+      - name: Deploy Summary
+        run: |
+          echo "✅ Security scan: PASSED"
+          echo "✅ Build: PASSED"
+          echo "✅ Deploy: Attempted (may skip if CF token not configured)"
+          echo ""
+          echo "Entity: Darrel-spell-living-trust"
