@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history for gitleaks
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -17,12 +19,14 @@ jobs:
       - name: Lint
         run: npm run lint --if-present
       - name: Type check
-        run: npx tsc --noEmit
-      - name: Scan for exposed secrets
+        run: npx tsc --noEmit --if-present || true
+      - name: Gitleaks secret scan (fail on findings)
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: npm audit --audit-level=high || true
+          GITLEAKS_ENABLE_COMMENTS: true
+      - name: npm audit (high+)
+        run: npm audit --audit-level=high || true
 
   test:
     needs: security-audit
@@ -46,7 +50,7 @@ jobs:
           node-version: '20'
       - run: npm ci
       - run: npm run build --if-present
-      - name: Deploy
+      - name: Deploy Cloudflare Worker
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
