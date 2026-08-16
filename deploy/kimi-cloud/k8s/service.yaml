@@ -4,6 +4,7 @@ metadata:
   name: rtv-kimi-cloud
   labels:
     app: rtv-kimi-cloud
+    entity: darrel-spell-living-trust
 spec:
   type: ClusterIP
   selector:
