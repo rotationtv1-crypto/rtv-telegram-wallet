@@ -1,0 +1,52 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rtv-multi-domain
+  labels:
+    app: rtv
+    entity: darrel-spell-living-trust
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://app.rotationtv.network"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.rotationtv.network
+        - bot.rotationtv.network
+        - app.rotationtv.network
+      secretName: rtv-tls
+  rules:
+    - host: api.rotationtv.network
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rtv-kimi-cloud
+                port:
+                  number: 80
+    - host: bot.rotationtv.network
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rtv-kimi-cloud
+                port:
+                  number: 80
+    - host: app.rotationtv.network
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rtv-webapp
+                port:
+                  number: 80
