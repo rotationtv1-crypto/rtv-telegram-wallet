@@ -1,0 +1,129 @@
+# RotationTV — Kubernetes Deployment
+# kimi-cloud compatible k8s manifests
+# Entity: Darrel-spell-living-trust
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rotationtv
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtv-worker
+  namespace: rotationtv
+  labels:
+    app: rtv-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rtv-worker
+  template:
+    metadata:
+      labels:
+        app: rtv-worker
+    spec:
+      containers:
+      - name: worker
+        image: ghcr.io/rotationtv1-crypto/rtv-worker:latest
+        ports:
+        - containerPort: 8787
+        env:
+        - name: NODE_ENV
+          value: production
+        - name: PORT
+          value: "8787"
+        envFrom:
+        - secretRef:
+            name: rtv-secrets
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8787
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8787
+          initialDelaySeconds: 15
+          periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rtv-worker
+  namespace: rotationtv
+spec:
+  selector:
+    app: rtv-worker
+  ports:
+  - port: 80
+    targetPort: 8787
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rtv-ingress
+  namespace: rotationtv
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+  - hosts:
+    - api.rotationtvnetwork.com
+    - app.rotationtvnetwork.com
+    - bot.rotationtvnetwork.com
+    secretName: rtv-tls
+  rules:
+  - host: api.rotationtvnetwork.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: rtv-worker
+            port:
+              number: 80
+  - host: app.rotationtvnetwork.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: rtv-webapp
+            port:
+              number: 80
+  - host: bot.rotationtvnetwork.com
+    http:
+      paths:
+      - path: /telegram/
+        pathType: Prefix
+        backend:
+          service:
+            name: rtv-worker
+            port:
+              number: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rtv-webapp
+  namespace: rotationtv
+spec:
+  selector:
+    app: rtv-webapp
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
