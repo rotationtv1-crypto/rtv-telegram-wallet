@@ -6,7 +6,7 @@ interface StarsItem {
   stars: number;
 }
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE || '';
+const API_BASE = (import.meta as any).env?.VITE_API_BASE || 'https://rotationtv-live-ai-clones.rotationtimmy.workers.dev';
 
 export function useStarsPayment() {
   const [paying, setPaying] = useState(false);
