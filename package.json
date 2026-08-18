@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ton/core": "^0.60.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "framer-motion": "^11.0.0",
