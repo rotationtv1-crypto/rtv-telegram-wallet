@@ -1,8 +1,11 @@
 /**
- * TON ROUTES — Full Chainstack API Coverage
+ * TON ROUTES — Full Chainstack API Coverage + Jetton Transfer / Mining Claim
  * Exposes all TON v2 + v3 methods as worker endpoints
- * Rotationtvnetwork LLC | June 28, 2026
+ * Rotationtvnetwork LLC | June 28, 2026 | Updated Aug 2026
  */
+
+import { prepareTransferRoute } from './jettonTransfer';
+import { miningClaimRoute } from './miningClaim';
 
 const V2 = "https://ton-mainnet.core.chainstack.com/3fd2a9746dfa1f58a08196100f9bccf9/api/v2";
 const V3 = "https://ton-mainnet.core.chainstack.com/3fd2a9746dfa1f58a08196100f9bccf9/api/v3";
@@ -22,11 +25,40 @@ async function tonV3(path: string, params?: Record<string, string>): Promise<any
 
 export async function routeTONRequest(
   request: Request,
-  url: URL
+  url: URL,
+  env?: any
 ): Promise<Response | null> {
   const p = url.pathname;
   const q = Object.fromEntries(url.searchParams.entries());
   const ok = (d: any) => new Response(JSON.stringify(d), { headers: CORS });
+
+  // ── Jetton prepare-transfer (unsigned payload for TonConnect) ─────────────
+  if (p === "/api/ton/jetton/prepare-transfer" && request.method === "POST") {
+    if (!env?.RTVS_JETTON) {
+      return Response.json({ ok: false, error: "RTVS_JETTON secret not configured" }, { status: 503, headers: CORS });
+    }
+    const chainstackV3 = env.CHAINSTACK_V3 || env.CHAINSTACK_TON_RPC_V3 || V3;
+    return prepareTransferRoute(request, {
+      RTVS_JETTON: env.RTVS_JETTON,
+      CHAINSTACK_V3: chainstackV3,
+    });
+  }
+
+  // ── Mining → Jetton claim ─────────────────────────────────────────────────
+  if (p === "/api/ton/mining/claim" && request.method === "POST") {
+    if (!env?.RTVS_JETTON || !env?.TREASURY_JETTON_WALLET) {
+      return Response.json({ ok: false, error: "RTVS_JETTON / TREASURY_JETTON_WALLET secrets required" }, { status: 503, headers: CORS });
+    }
+    const chainstackV3 = env.CHAINSTACK_V3 || env.CHAINSTACK_TON_RPC_V3 || V3;
+    return miningClaimRoute(request, {
+      RTVS_JETTON: env.RTVS_JETTON,
+      CHAINSTACK_V3: chainstackV3,
+      TREASURY_JETTON_WALLET: env.TREASURY_JETTON_WALLET,
+      SUPABASE_URL: env.SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_KEY || env.SUPABASE_SERVICE_ROLE_KEY,
+      POINTS_TO_RTVS: env.POINTS_TO_RTVS ? Number(env.POINTS_TO_RTVS) : undefined,
+    });
+  }
 
   // ── HEALTH ────────────────────────────────────────────────────────────────
   if (p === "/api/ton/health" || p === "/api/ton/metrics") {
