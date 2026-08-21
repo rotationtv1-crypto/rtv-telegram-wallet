@@ -8,4 +8,3 @@ dist/
 .npm/
 __pycache__/
 .cache/
-blobs/
