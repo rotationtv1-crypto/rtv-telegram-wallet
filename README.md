@@ -1,94 +1,54 @@
-# RotationTV Network — Sovereign Payment & Ecosystem Platform
+# RotationTV Network — Telegram Stars + Cloudflare Platform
 
 > "Learn it. Live it. Love it. — We keep business rotating globally."
 
-## Architecture
+## Architecture (active)
 
 ```
 rotationtv1-crypto/rtv-telegram-wallet
-├── workers/
-│   ├── rtv-edge-gateway/     # Unified API router (9 companies)
-│   ├── rtv-payments/         # Sovereign payment gateway
-│   └── rtv-blockchain/       # TON + Solana blockchain gateway
 ├── src/
-│   ├── bot/                  # Telegram bot handlers
-│   ├── entities/             # Entity schema definitions
-│   ├── functions/            # Backend function index
-│   ├── lib/                  # Shared libraries (env, utils)
-│   └── pages/                # Frontend pages (Mini App)
-├── docs/                     # Playbooks & documentation
-├── wrangler.jsonc            # Root Cloudflare config
-├── package.json              # Dependencies
-└── tsconfig.json             # TypeScript config
+│   ├── lib/                  # telegramStars, telegramCloudSdk, botGateway, webAuth, …
+│   ├── hooks/                # useStarsPayment, …
+│   ├── pages/ + screens/     # Mini App UI
+│   ├── functions/            # Bot / edge handlers
+│   └── …
+├── deploy/
+│   ├── multi-domain/         # Cloudflare routes + custom domain notes
+│   └── ORCHESTRATOR_DEPLOYMENT.md
+├── wrangler.jsonc            # Cloudflare Worker + assets config
+├── package.json
+└── .github/workflows/        # CI (typecheck / gated deploy)
 ```
 
-## Sovereign Payment Rails
+Legacy packages under `deploy/kimi-cloud`, `deploy/webapp`, `deploy/acme` are **REMOVED** (stubs only).
 
-| Rail | Currency | Fee | Settlement |
-|------|----------|-----|------------|
-| Telegram Stars | XTR | 0% | Instant |
-| TON Jetton | TON | 0.5% | ~5 seconds |
-| Internal RTV | RTV | 0% | Instant |
+## Payment surface (user-facing)
 
-**Stripe is PURGED (HTTP 410 GONE). Sovereign payments only.**
+| Rail              | Currency | Notes                          |
+|-------------------|----------|--------------------------------|
+| Telegram Stars    | XTR      | Primary — tips, gifts, subs    |
+| TON / Jetton      | TON      | Supported where implemented    |
 
-## Economics
+Stripe payment-create paths are quarantined (HTTP 410).  
+Do not re-introduce user-facing RTV-token or Stripe checkout for digital goods/services inside Telegram.
 
-- Telegram Stars (XTR) + USDT (TON Connect) — no internal token
-- 1 Telegram Star = $0.013 USD → 1.3 RTV
-- 1 TON ≈ $1.50 USD → 150 RTV
-- Revenue split: 80% creator / 15% platform / 5% agency
-
-## Cloudflare Infrastructure
-
-- Account: 7e431c541ea0f39d7f7fe5fd9f06eada
-- Zones: rotationpay.net, rotationcall.net, rotationomega.org
-- Workers: rtv-edge-gateway, rtv-payments, rtv-blockchain
-- D1: rotation-erotica-db
-- R2: 1 bucket
-- KV: 1 namespace
-
-## Telegram Bot
-
-- Bot: @ROTATIONEROTICA_BOT
-- Commands: /start /help /price /buy /stars /payout /balance /transactions
-- Auth: HMAC-SHA256 initData verification
-- Webhook: → rtvPaymentHub function
-- Welcome bonus: 100 RTV
-
-## AI Providers
-
-| Provider | Model | Status |
-|----------|-------|--------|
-| Anthropic | claude-sonnet-4-6 | ✅ Active |
-| Google | gemini-2.0-flash | ✅ Active |
-| Venice | venice-uncensored | ⚠️ Credits needed |
-| Kimi/Moonshot | moonshot-v1 | ❌ Key invalid |
-
-## Deploy
+## Cloudflare deploy
 
 ```bash
-# Deploy all workers
-npm run deploy:all
-
-# Or individually
-npm run deploy:gateway
-npm run deploy:payments
-npm run deploy:blockchain
+npx wrangler secret put TELEGRAM_BOT_TOKEN   # and other secrets
+npx wrangler deploy
 ```
 
-## 9-Company Ecosystem
+See `deploy/multi-domain/README.md` for `api.` / `bot.` custom domains and Universal SSL.
 
-1. RotationTV Network — Main platform
-2. RotationPay — Sovereign payments
-3. RotationCall — Enterprise AI voice
-4. RTV AI University — On-chain education
-5. Bigo Agency — Creative agency
-6. White Logistics Solutions — AI logistics
-7. EmergentLabs — Build infrastructure
-8. Pretrial Services of America — Justice tech
-9. OpenClaw — AI agent orchestration
+CI deploys only when `CLOUDFLARE_API_TOKEN` is set in repo secrets.
+
+## Verification checklist
+
+- [ ] Stars invoice path (createInvoiceLink → openInvoice → pre_checkout → successful_payment)
+- [ ] No active Stripe / RTV-token purchase UI for in-app digital goods
+- [ ] Webhook routing isolated per bot
+- [ ] Typecheck + CI green
 
 ---
-Presidential Authority: Darrel — Owner & CEO
-Built on Base44 + Cloudflare Workers
+Owner: Rotationtvnetwork LLC
