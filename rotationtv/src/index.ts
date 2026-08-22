@@ -1,4 +1,5 @@
 import { initOnboarding, advanceOnboarding, getOnboardingState, getGenderProfile, createStarsInvoice, buildConfirmationMessage, generateTonviewerLink, dispatchViaBot } from "./lib/rotationDate";
+import { getMainBotInlineResults, getEroticaBotInlineResults, answerInlineQuery } from "./lib/inlineWebApp";
 import { provisionBot, provisionFromTemplate, probeBot, autoRecoverBot, probeFleet, recoverFleet, autoApproveStarsPayment, broadcastToBots, REGIONAL_BOT_TEMPLATES } from "./lib/botAutonomy";
 /**
  * ROTATIONTVNETWORK LLC — MAIN CLOUDFLARE WORKER
@@ -308,6 +309,20 @@ export default {
 
     // ── @RotationPayWallet_bot webhook ───────────────────────────────────────
     if (pathname === "/telegram/webhook" || pathname === "/telegram/wallet/webhook") {
+      // Handle inline queries for WebApp integration
+      const update = await request.clone().json().catch(() => null);
+      if (update?.inline_query) {
+        const baseUrl = "https://rotationtv-live-ai-clones.rotationtimmy.workers.dev";
+        const botToken = env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "";
+        const results = getMainBotInlineResults("base44_229784_bot", baseUrl, update.inline_query.query);
+        await answerInlineQuery(botToken, update.inline_query.id, results);
+        return json({ ok: true, status: "inline_answered" });
+      }
+      if (update?.message?.web_app_data) {
+        // Handle WebApp data sent from inline button
+        const data = JSON.parse(update.message.web_app_data.data || "{}");
+        return json({ ok: true, status: "web_app_data", data });
+      }
       if (!env.TELEGRAM_BOT_TOKEN_MAIN && !env.TELEGRAM_BOT_TOKEN) {
         // Token not yet set — ack Telegram so it doesn't disable webhook
         return json({ ok: true, status: "pending_token" });
@@ -324,6 +339,15 @@ export default {
 
     // ── @ROTATIONEROTICA_BOT webhook (Super Agent — 18+ platform) ─────────
     if (pathname === "/telegram/erotica/webhook") {
+      // Handle inline queries for erotica WebApp integration
+      const eroticaUpdate = await request.clone().json().catch(() => null);
+      if (eroticaUpdate?.inline_query) {
+        const baseUrl = "https://rotationtv-live-ai-clones.rotationtimmy.workers.dev";
+        const results = getEroticaBotInlineResults("RotationtvErotica_Bot", baseUrl, eroticaUpdate.inline_query.query);
+        const eroticaToken = env.TELEGRAM_BOT_TOKEN_EROTICA || env.TELEGRAM_BOT_TOKEN_7 || "";
+        await answerInlineQuery(eroticaToken, eroticaUpdate.inline_query.id, results);
+        return json({ ok: true, status: "inline_answered" });
+      }
       if (!env.TELEGRAM_BOT_TOKEN_EROTICA) {
         return json({ ok: true, status: "pending_token" });
       }
