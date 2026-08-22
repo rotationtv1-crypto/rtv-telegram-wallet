@@ -33,6 +33,8 @@ export interface ActiveStream {
 interface Store {
   user: RTVUser | null;
   loading: boolean;
+  stars_balance: number;
+  subscription: 'free' | 'basic' | 'pro' | 'enterprise';
   activeStream: ActiveStream | null;
   initUser: () => Promise<void>;
   setUser: (u: RTVUser) => void;
@@ -53,7 +55,7 @@ export const useStore = create<Store>((set, get) => ({
   subscription: 'free' as const,
   activeStream: null,
   initUser: async () => {
-    const tg = typeof window !== "undefined" ? window.Telegram?.WebApp : null;
+    const tg = typeof window !== "undefined" ? (window as any).Telegram?.WebApp : null;
     if (!tg?.initDataUnsafe?.user) { set({ loading: false }); return; }
     const tgUser = tg.initDataUnsafe.user;
     try {
@@ -69,7 +71,7 @@ export const useStore = create<Store>((set, get) => ({
           language_code: tgUser.language_code,
         }),
       });
-      const data = await resp.json();
+      const data = await resp.json() as { user?: RTVUser; welcome_bonus?: boolean };
       if (data.user) {
         set({ user: data.user, loading: false });
         if (data.welcome_bonus) tg.HapticFeedback?.notificationOccurred("success");

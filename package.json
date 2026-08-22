@@ -9,7 +9,9 @@
     "deploy": "vite build && wrangler deploy",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit -p tsconfig.stars.json",
+    "typecheck:full": "tsc --noEmit"
   },
   "dependencies": {
     "@ton/core": "^0.60.0",
