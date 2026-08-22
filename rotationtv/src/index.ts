@@ -1,3 +1,4 @@
+import { initOnboarding, advanceOnboarding, getOnboardingState, getGenderProfile, createStarsInvoice, buildConfirmationMessage, generateTonviewerLink, dispatchViaBot } from "./lib/rotationDate";
 import { provisionBot, provisionFromTemplate, probeBot, autoRecoverBot, probeFleet, recoverFleet, autoApproveStarsPayment, broadcastToBots, REGIONAL_BOT_TEMPLATES } from "./lib/botAutonomy";
 /**
  * ROTATIONTVNETWORK LLC — MAIN CLOUDFLARE WORKER
@@ -338,6 +339,108 @@ export default {
     }
 
     // ── RotationErotica Image Pipeline ───────────────────────────────────────
+    // ── RotationDate: Gender Onboarding + Stars Subscriptions ─────────────
+
+    // GET /api/rotationdate/profiles — Gender-segmented profiles
+    if (pathname === "/api/rotationdate/profiles" && request.method === "GET") {
+      return Response.json({
+        ok: true,
+        profiles: {
+          male: getGenderProfile("male"),
+          female: getGenderProfile("female"),
+          "non-binary": getGenderProfile("non-binary"),
+        }
+      });
+    }
+
+    // POST /api/rotationdate/onboarding — Gender-segmented onboarding
+    if (pathname === "/api/rotationdate/onboarding" && request.method === "POST") {
+      const body = await request.json() as any;
+      const { initData, gender, interestedIn, step } = body;
+      if (!initData) return json({ ok: false, error: "INIT_DATA_REQUIRED" });
+
+      const params = new URLSearchParams(initData);
+      const userJson = params.get("user");
+      if (!userJson) return json({ ok: false, error: "USER_NOT_FOUND" });
+
+      const tgUser = JSON.parse(userJson);
+      let state = initOnboarding({ id: tgUser.id, username: tgUser.username, first_name: tgUser.first_name, photo_url: tgUser.photo_url });
+
+      if (step === "gender" && gender) {
+        if (!["male", "female", "non-binary"].includes(gender)) return json({ ok: false, error: "INVALID_GENDER" });
+        state = advanceOnboarding(tgUser.id, "gender", gender) ?? state;
+        const profile = getGenderProfile(gender);
+        return json({ ok: true, step: "preferences", gender, profile: { tagline: profile.tagline, welcomeMessage: profile.welcomeMessage }, tiers: profile.subscriptionTiers });
+      }
+
+      if (step === "preferences" && interestedIn) {
+        if (!Array.isArray(interestedIn)) return json({ ok: false, error: "INVALID_PREFERENCES" });
+        state = advanceOnboarding(tgUser.id, "interestedIn", interestedIn) ?? state;
+        const profile = getGenderProfile(state.gender!);
+        return json({ ok: true, step: "complete", profile, tiers: profile.subscriptionTiers });
+      }
+
+      return json({ ok: true, step: state.step, gender: state.gender, interestedIn: state.interestedIn });
+    }
+
+    // POST /api/rotationdate/subscribe — Create Stars invoice
+    if (pathname === "/api/rotationdate/subscribe" && request.method === "POST") {
+      const body = await request.json() as any;
+      const { gender, tier, botToken: customBotToken } = body;
+      if (!gender || !tier) return json({ ok: false, error: "MISSING_PARAMS" });
+
+      const botToken = customBotToken || env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "";
+      if (!botToken) return json({ ok: false, error: "NO_BOT_TOKEN" });
+
+      const botInfo = await fetch(`https://api.telegram.org/bot${botToken}/getMe`).then(r => r.json()).catch(() => null);
+      const botUsername = botInfo?.result?.username || "RotationMegaPlex_bot";
+
+      const invoice = createStarsInvoice(gender, tier, botUsername);
+      if (!invoice) return json({ ok: false, error: "INVALID_TIER" });
+
+      const tgResp = await fetch(`https://api.telegram.org/bot${botToken}/createInvoiceLink`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: invoice.title, description: invoice.description, payload: invoice.payload, currency: "XTR", prices: invoice.prices, provider_token: "" }),
+      });
+      const tgData = await tgResp.json() as any;
+      if (tgData.ok) return json({ ok: true, invoice_url: tgData.result, tier, gender, price: invoice.prices[0].amount });
+      return json({ ok: false, error: tgData.description || "INVOICE_FAILED" });
+    }
+
+    // POST /api/rotationdate/payment-webhook — Stars payment + Tonviewer dispatch
+    if (pathname === "/api/rotationdate/payment-webhook" && request.method === "POST") {
+      const update = await request.json() as any;
+
+      if (update.pre_checkout_query) {
+        const botToken = env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "";
+        await fetch(`https://api.telegram.org/bot${botToken}/answerPreCheckoutQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pre_checkout_query_id: update.pre_checkout_query.id, ok: true }),
+        });
+        return json({ status: "pre_checkout_answered" });
+      }
+
+      if (update.message?.successful_payment) {
+        const payment = update.message.successful_payment;
+        const chatId = update.message.chat.id;
+        let payload: any = {};
+        try { payload = JSON.parse(payment.invoice_payload); } catch {}
+
+        const gender = payload.gender || "non-binary";
+        const tier = payload.tier || "Basic";
+        const botToken = env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "";
+        const botInfo = await fetch(`https://api.telegram.org/bot${botToken}/getMe`).then(r => r.json()).catch(() => null);
+        const botUsername = botInfo?.result?.username || "RotationMegaPlex_bot";
+        const tonviewerLink = generateTonviewerLink("https://tonviewer.com", chatId, payment.telegram_payment_charge_id || "unknown");
+        const { text, keyboard } = buildConfirmationMessage(gender, tier, tonviewerLink, botUsername);
+        const sent = await dispatchViaBot(botToken, chatId, text, keyboard);
+        return json({ status: sent ? "payment_processed_and_dispatched" : "dispatch_failed", gender, tier, tonviewer_link: tonviewerLink });
+      }
+      return json({ status: "ok" });
+    }
+
     if (pathname.startsWith("/api/erotica/")) {
       // Age gate enforced inside routeEroticaImageRequest
       const eroticaResp = await routeEroticaImageRequest(request, url, env as any);
