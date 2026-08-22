@@ -1,10 +1,13 @@
 // ============================================================
 // rotationtv-cloudflare-workers/src/index.ts
-// Telegram Webhook Router + AI Proxy
+// Telegram Webhook Router + AI Proxy + WebApp menu setup
 // Routes: /ai → Venice, /image → z-image-turbo, /voice → TTS
+//         /api/bots/setup-menu-all (ADMIN_SECRET)
 // ============================================================
 
-interface Env {
+import { handleSetupMenuRoutes, type SetupMenuEnv } from './setupMenuFetch';
+
+interface Env extends SetupMenuEnv {
   VENICE_API_KEY: string;
   TELEGRAM_BOT_TOKEN: string;
   SUPABASE_URL: string;
@@ -159,13 +162,25 @@ export default {
       });
     }
 
+    // WebApp menu setup (ADMIN_SECRET) — PR #36 follow-up
+    const setupRes = await handleSetupMenuRoutes(request, env, url.pathname);
+    if (setupRes) return setupRes;
+
     // Health check
-    if (url.pathname === '/') {
+    if (url.pathname === '/' || url.pathname === '/health') {
       return new Response(JSON.stringify({
         status: 'alive',
         service: 'rotationtv-venice-ai',
-        version: '1.0.0',
-        endpoints: ['/telegram/webhook', '/health', '/v1/chat', '/v1/image', '/v1/tts'],
+        version: '1.1.0',
+        endpoints: [
+          '/telegram/webhook',
+          '/health',
+          '/v1/chat',
+          '/v1/image',
+          '/v1/tts',
+          '/api/bots/setup-menu-all',
+          '/api/bots/:botId/setup-menu',
+        ],
       }), { headers: { 'Content-Type': 'application/json' } });
     }
 
@@ -184,7 +199,6 @@ export default {
         const parsed = parseCommand(text);
 
         if (!parsed) {
-          // Not a command — ignore or echo
           return new Response('ok');
         }
 
@@ -197,7 +211,6 @@ export default {
               break;
             }
             const response = await veniceChat(env.VENICE_API_KEY, args, COMMAND_SYSTEMS.ai);
-            // Telegram messages have 4096 char limit
             const chunks = response.match(/.{1,4000}/g) || [response];
             for (const chunk of chunks) {
               await sendMessage(env.TELEGRAM_BOT_TOKEN, chatId, chunk, replyTo);
@@ -241,7 +254,6 @@ export default {
           }
 
           case 'wallet': {
-            // Query Supabase for balance
             if (env.SUPABASE_URL && env.SUPABASE_SERVICE_KEY) {
               const userRes = await fetch(`${env.SUPABASE_URL}/rest/v1/RtvUser?telegram_id=eq.${userId}&select=rtv_balance,ton_wallet_address`, {
                 headers: { 'apikey': env.SUPABASE_SERVICE_KEY },

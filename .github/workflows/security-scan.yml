@@ -32,10 +32,12 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci --ignore-scripts || npm install --ignore-scripts
-      - name: Run tests if present
+      - name: Full test suite
         run: |
           if [ -f package.json ] && grep -q '"test"' package.json; then
             npm test --if-present
           else
             echo "No test script defined — skipping"
           fi
+      - name: WebApp menu unit tests (PR #36)
+        run: npm test -- tests/webapp
