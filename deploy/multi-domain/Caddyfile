@@ -1,15 +1,3 @@
-# LEGACY / OPTIONAL self-host only.
-# Prefer Cloudflare Universal SSL + Worker custom domains.
-# Kept for hybrid reference; not part of active Cloudflare path.
-
-{
-  email admin@rotationtv.network
-}
-
-api.rotationtv.network {
-  reverse_proxy localhost:8787
-}
-
-bot.rotationtv.network {
-  reverse_proxy localhost:8787
-}
+# LEGACY OPTIONAL ONLY — not required for Cloudflare path.
+# Prefer Worker custom domains + Universal SSL.
+# Kept as reference; do not use for primary production.

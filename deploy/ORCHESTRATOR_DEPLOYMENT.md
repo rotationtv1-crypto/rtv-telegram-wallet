@@ -1,35 +1,33 @@
-# RTV Telegram Orchestrator — Cloudflare Deployment Package
+# RTV Telegram Orchestrator — Cloudflare Only
 
-**No fake live claims.** Artifacts only. Deploy requires your Cloudflare account + secrets.
+**No fake live claims. No self-host packages.**
 
-## Cancelled (explicit)
-1. ~~Standalone Web App separate hosting~~ — cancelled
-3. ~~kimi-cloud Docker / k8s packaging~~ — cancelled
+## Cancelled & Removed
+- Standalone WebApp package (`deploy/webapp/`) — REMOVED
+- kimi-cloud Docker + k8s (`deploy/kimi-cloud/`) — REMOVED
+- cert-manager / Ingress ACME (`deploy/acme/`) — REMOVED
 
-## Active remaining
-2. Multi-domain routing (Cloudflare-native)
-4. ACME / HTTPS → Cloudflare Universal SSL + Custom Domains (no cert-manager needed)
-5. Cloud SDK method surface + multi-bot credential isolation (already present in `src/lib/telegramCloudSdk.ts` + `botGateway.ts`)
+## Active path
+1. Multi-domain routing via Cloudflare Worker routes + custom domains (`deploy/multi-domain/`)
+2. HTTPS via Cloudflare Universal SSL (no external ACME)
+3. Cloud SDK + multi-bot isolation already in `src/lib/telegramCloudSdk.ts` + `botGateway.ts`
 
-## Cloudflare-first order
-1. Set secrets on the Worker:
-   ```
-   npx wrangler secret put TELEGRAM_BOT_TOKEN
-   npx wrangler secret put SUPABASE_URL
-   npx wrangler secret put SUPABASE_SERVICE_KEY
-   # etc.
-   ```
-2. Add routes / custom domains in `wrangler.jsonc` (see `deploy/multi-domain/`)
-3. `npx wrangler deploy`
-4. Cloudflare DNS → Proxied CNAMEs or Worker custom domains for `api.` / `bot.`
-5. Pages custom domain for Mini App if using separate Pages project
-6. Enable Always Use HTTPS + Automatic HTTPS Rewrites (Universal SSL)
+## Deploy order
+```bash
+# Secrets (one-time)
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+npx wrangler secret put SUPABASE_URL
+npx wrangler secret put SUPABASE_SERVICE_KEY
+# ...other secrets
 
-## Verification (after you deploy)
-- [ ] `curl https://api.rotationtv.network/health` (or your worker URL) returns 200
-- [ ] Webhook path `/webhook/<botId>` isolated per bot token env
-- [ ] Stars invoice path only (no Stripe / RTV-token user-facing)
-- [ ] gitleaks + typecheck green in CI
+# Routes / domains — see deploy/multi-domain/README.md
+npx wrangler deploy
+```
 
-## Inactive code policy
-Any reference that is not actively used or that re-introduces Stripe / RTV-token payment surfaces for tips/subs/gifts must be removed or quarantined. Prefer GitHub Actions + wrangler over external self-host packages.
+## Verification (after you deploy with your account)
+- Worker health endpoint returns 200
+- `/webhook/<botId>` isolated per bot token
+- Stars (XTR) invoice path only
+- CI typecheck green
+
+Any remaining Caddy / Docker / k8s files under `deploy/` are stubs marked REMOVED.
