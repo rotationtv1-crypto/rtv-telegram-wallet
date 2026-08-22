@@ -28,7 +28,7 @@ import { handleBuyCommand, handleBuyCallback, registerPreCheckout, registerSucce
 
 // ── ENV ────────────────────────────────────────────────────────────────────
 interface WalletEnv {
-  TELEGRAM_BOT_TOKEN_MAIN: string;
+  TELEGRAM_BOT_TOKEN_MAIN?: string;
   SUPABASE_URL: string;
   SUPABASE_SERVICE_KEY: string;
   CHAINSTACK_TON_RPC_V2: string;
@@ -180,7 +180,7 @@ const fmtRtvs = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(2)}K` : n.toStr
 
 // ── Bot factory ────────────────────────────────────────────────────────────
 export function createRotationPayWalletBot(env: WalletEnv) {
-  const bot = new Bot(env.TELEGRAM_BOT_TOKEN_MAIN);
+  const bot = new Bot(env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "");
 
   // ──────────────────────────────────────────────────────────────────────────
   // /start — onboarding

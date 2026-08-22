@@ -309,26 +309,54 @@ export default {
 
     // ── @RotationPayWallet_bot webhook ───────────────────────────────────────
     if (pathname === "/telegram/webhook" || pathname === "/telegram/wallet/webhook") {
-      // Handle inline queries for WebApp integration
-      const update = await request.clone().json().catch(() => null);
-      if (update?.inline_query) {
-        const baseUrl = "https://rotationtv-live-ai-clones.rotationtimmy.workers.dev";
-        const botToken = env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "";
-        const results = getMainBotInlineResults("base44_229784_bot", baseUrl, update.inline_query.query);
-        await answerInlineQuery(botToken, update.inline_query.id, results);
-        return json({ ok: true, status: "inline_answered" });
-      }
-      if (update?.message?.web_app_data) {
+      try {
+        // Parse update once — pass to handlers
+        const update = await request.clone().json().catch(() => null);
+        if (!update) return json({ ok: true, status: "no_update" });
+
+        // Handle inline queries for WebApp integration
+        if (update.inline_query) {
+          const baseUrl = "https://rotationtv-live-ai-clones.rotationtimmy.workers.dev";
+          const botToken = env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "";
+          if (!botToken) return json({ ok: true, status: "pending_token" });
+          try {
+            const results = getMainBotInlineResults("base44_229784_bot", baseUrl, update.inline_query.query);
+            await answerInlineQuery(botToken, update.inline_query.id, results);
+          } catch (e) { /* inline mode may not be enabled yet */ }
+          return json({ ok: true, status: "inline_answered" });
+        }
+
         // Handle WebApp data sent from inline button
-        const data = JSON.parse(update.message.web_app_data.data || "{}");
-        return json({ ok: true, status: "web_app_data", data });
+        if (update.message?.web_app_data) {
+          try {
+            const data = JSON.parse(update.message.web_app_data.data || "{}");
+            return json({ ok: true, status: "web_app_data", data });
+          } catch {
+            return json({ ok: true, status: "web_app_data_invalid" });
+          }
+        }
+
+        // Check for any bot token before routing to wallet bot
+        const botToken = env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "";
+        if (!botToken) {
+          return json({ ok: true, status: "pending_token" });
+        }
+
+        // Route to wallet bot handler — always return 200 to Telegram
+        try {
+          await routeWalletBot(request, env as any);
+        } catch (e: any) {
+          console.error("[webhook] routeWalletBot error:", e?.message);
+        }
+        // Always ack 200 to Telegram
+        return new Response("OK", { status: 200 });
+
+        // Fallback — acknowledge so Telegram doesn't retry
+        return json({ ok: true, status: "handled" });
+      } catch (e: any) {
+        // Never let the webhook 500 — Telegram would retry forever
+        return json({ ok: true, status: "error_handled", error: e?.message || "unknown" });
       }
-      if (!env.TELEGRAM_BOT_TOKEN_MAIN && !env.TELEGRAM_BOT_TOKEN) {
-        // Token not yet set — ack Telegram so it doesn't disable webhook
-        return json({ ok: true, status: "pending_token" });
-      }
-      const botResp = await routeWalletBot(request, env as any);
-      if (botResp) return botResp;
     }
 
     // ── Stripe Connect + PayPal Multiparty + Credits ─────────────────────
