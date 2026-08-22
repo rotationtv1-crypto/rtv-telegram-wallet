@@ -1,34 +1,15 @@
-# RotationTV multi-domain reverse proxy (self-host / hybrid)
-# Entity: Darrel-spell-living-trust
-# Usage: caddy run --config deploy/multi-domain/Caddyfile
+# LEGACY / OPTIONAL self-host only.
+# Prefer Cloudflare Universal SSL + Worker custom domains.
+# Kept for hybrid reference; not part of active Cloudflare path.
 
 {
   email admin@rotationtv.network
-  # ACME via Let's Encrypt (automatic)
-}
-
-app.rotationtv.network {
-  reverse_proxy rtv-webapp:80
-  header {
-    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    X-Content-Type-Options nosniff
-  }
 }
 
 api.rotationtv.network {
-  reverse_proxy rtv-kimi-cloud:8080
-  header {
-    Access-Control-Allow-Origin "https://app.rotationtv.network"
-    Access-Control-Allow-Methods "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers "Authorization, Content-Type"
-  }
+  reverse_proxy localhost:8787
 }
 
 bot.rotationtv.network {
-  reverse_proxy rtv-kimi-cloud:8080
-}
-
-# Optional Mini App
-mini.rotationtv.network {
-  reverse_proxy rtv-mini-app:80
+  reverse_proxy localhost:8787
 }

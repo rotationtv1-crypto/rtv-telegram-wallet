@@ -1,26 +1,18 @@
-# Multi-Domain Routing (app. / api. / bot.)
-
-**Entity: Darrel-spell-living-trust**
+# Multi-Domain Routing — Cloudflare Native Only
 
 | Subdomain | Target | Purpose |
-|-----------|--------|---------|
-| `app.rotationtv.network` | Cloudflare Pages (rtv-webapp) | Standalone WebApp.tsx |
-| `api.rotationtv.network` | Cloudflare Worker (rotationtv-live-ai-clones) | Backend + Stars + Kimi + Telegram webhooks |
-| `bot.rotationtv.network` | Same Worker or dedicated gateway Worker | Multi-bot webhook entry (optional split) |
-| `mini.rotationtv.network` | Mini App Pages / Workers | Telegram Mini App only (optional) |
+|-----------|--------|--------|
+| `api.rotationtv.network` | Worker (wrangler name) | Backend, Stars webhooks, AI, streams |
+| `bot.rotationtv.network` | Same Worker (path `/webhook/<botId>`) | Multi-bot isolation |
+| `app.` / Mini App | Cloudflare Pages or Worker assets | Telegram Mini App + wallet UI |
 
-## Cloudflare (recommended — zero extra infra)
-
-### 1. DNS (Cloudflare DNS for rotationtv.network)
+## 1. DNS (Cloudflare zone)
 ```
-CNAME  app   rtv-webapp.pages.dev          Proxied
-CNAME  api   rotationtv-live-ai-clones.rotationtimmy.workers.dev   Proxied
-# or use Worker custom domain binding
+CNAME  api   <your-worker>.<account>.workers.dev   Proxied
+# Prefer Worker Custom Domain binding instead of CNAME when possible
 ```
 
-### 2. Worker Custom Domain (wrangler)
-Uncomment / add in wrangler.jsonc:
-
+## 2. wrangler.jsonc routes
 ```jsonc
 "routes": [
   { "pattern": "api.rotationtv.network/*", "zone_name": "rotationtv.network" },
@@ -28,38 +20,30 @@ Uncomment / add in wrangler.jsonc:
 ]
 ```
 
-Then:
+Deploy:
 ```bash
 npx wrangler deploy
 # or
 npx wrangler domains add api.rotationtv.network
 ```
 
-### 3. Pages Custom Domain
-Dashboard → Pages → rtv-webapp → Custom domains → Add `app.rotationtv.network`
+## 3. HTTPS / ACME
+Cloudflare Universal SSL + Custom Hostnames / Custom Domains.  
+No separate cert-manager or Caddy required for pure Cloudflare.
 
-### 4. CORS (must allow)
-In Worker `src/index.ts` (or Hono middleware):
+## 4. CORS allowlist (Worker)
 ```ts
 const ALLOWED = [
   'https://app.rotationtv.network',
-  'https://mini.rotationtv.network',
   'https://t.me',
-  // local
   'http://localhost:5173',
-  'http://localhost:5174',
 ];
 ```
 
-## Self-hosted alternative (Caddy + k8s / Docker)
-
-See `Caddyfile` and the k8s Ingress in `../acme/`.
-
-## Telegram Bot Webhooks
-Point each bot’s webhook to:
+## 5. Bot webhooks
 ```
 https://api.rotationtv.network/webhook/<botId>
-# or
-https://bot.rotationtv.network/webhook/<botId>
 ```
-botGateway.ts already supports path-based multi-bot routing.
+`botGateway.ts` already routes by path. Keep one token env var per bot (`TELEGRAM_BOT_TOKEN_<id>`).
+
+Caddy / k8s files under this folder are legacy self-host references only — not required for Cloudflare path.
