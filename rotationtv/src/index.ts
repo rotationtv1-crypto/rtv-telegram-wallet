@@ -56,7 +56,7 @@ import { routeSolanaRequest } from "./lib/solanaEngine";
 import { routeBridgeRequest } from "./lib/crossChainBridge";
 import {
   createSupabaseClient,
-  authenticateTelegramUser,
+  authenticateTelegramUser as authenticateDbUser,
   getCurrentUser,
   getLiveStreams,
   createStream,
@@ -821,7 +821,7 @@ export default {
         const db = createSupabaseClient(env as any);
         const displayName = [first_name, last_name].filter(Boolean).join(" ") || username || `User${telegram_id}`;
         const existingBefore = await getCurrentUser(db, telegram_id);
-        const user = await authenticateTelegramUser(db, telegram_id, username ?? "", displayName, photo_url);
+        const user = await authenticateDbUser(db, telegram_id, username ?? "", displayName, photo_url);
         return json({ user, welcome_bonus: !existingBefore });
       } catch (e: any) {
         return json({ error: e.message || "Auth failed" }, 500);
