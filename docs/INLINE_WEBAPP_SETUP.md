@@ -1,54 +1,56 @@
-# Inline WebApp + Menu Button Setup
+# Inline WebApp Menu Setup
 
-## What this adds
+## Overview
 
-1. **Persistent menu button** (bottom-left) launching the Mini App for each bot
-2. **Inline `web_app` keyboards** via `getInlineKeyboardForBot(botId)`
-3. **One-shot script** `scripts/setup-webapp-menus.mjs` (tokens from env only)
-4. **API routes** (wire in Worker entry):
-   - `POST /api/bots/:botId/setup-menu`
-   - `POST /api/bots/setup-menu-all`
+Registers Telegram **menu buttons** and **inline `web_app` keyboards** so both primary bots open the production Mini App.
 
-## Production URLs
+| Bot | Menu label | URL |
+|-----|------------|-----|
+| main | Open RotationTV | `https://rotationtv-mini-app.pages.dev` |
+| erotica | Open Erotica | `https://rotationtv-mini-app.pages.dev?bot=erotica` |
 
-- Main: `https://rotationtv-mini-app.pages.dev`
-- Erotica: `https://rotationtv-mini-app.pages.dev?bot=erotica`
+Standalone wallet (Vercel) is separate from the Telegram Mini App surface. Prefer **Pages Mini App URLs** for menu buttons so `Telegram.WebApp.initData` is present.
 
-## Wire routes (Hono example)
+## Environment
 
-```ts
-import { applyWebAppMenuButtons, getBotById, getInlineKeyboardForBot } from './lib/botGateway';
-import { setWebAppMenuButton } from './lib/telegramCloudSdk';
+| Variable | Purpose |
+|----------|---------|
+| `TELEGRAM_BOT_TOKEN_MAIN` or `TELEGRAM_BOT_TOKEN_6` | Main bot token |
+| `TELEGRAM_BOT_TOKEN_EROTICA` or `TELEGRAM_BOT_TOKEN_7` | Erotica bot token |
+| `ADMIN_SECRET` | Bearer token for Worker setup routes |
+| `MINI_APP_URL` / `NEXT_PUBLIC_APP_URL` | Override Mini App base URL |
+| `EROTICA_APP_URL` | Override erotica Mini App URL |
 
-app.post('/api/bots/:botId/setup-menu', async (c) => {
-  const botId = c.req.param('botId');
-  const bot = getBotById(botId);
-  if (!bot?.botToken) return c.json({ error: 'BOT_NOT_REGISTERED' }, 404);
-  const text = bot.isErotica || botId === 'erotica' ? 'Open Erotica' : 'Open RotationTV';
-  const url = bot.webAppUrl || 'https://rotationtv-mini-app.pages.dev';
-  try {
-    await setWebAppMenuButton(botId, text, url);
-    return c.json({ ok: true, botId, menu: { text, url } });
-  } catch (e: any) {
-    return c.json({ ok: false, error: e.message }, 500);
-  }
-});
+Never commit tokens. Use `wrangler secret put` / CI secrets only.
 
-app.post('/api/bots/setup-menu-all', async (c) => {
-  const result = await applyWebAppMenuButtons(c.env as any);
-  return c.json(result);
-});
-```
-
-## After deploy
+## Method A — One-shot local script
 
 ```bash
-# From CI or local (secrets in env only)
 TELEGRAM_BOT_TOKEN_MAIN=... TELEGRAM_BOT_TOKEN_EROTICA=... \
   node scripts/setup-webapp-menus.mjs
+```
 
-# Or via Worker
-curl -X POST https://<worker>/api/bots/setup-menu-all
+Pure Node (no TS loader required).
+
+## Method B — Cloudflare Worker
+
+1. Mount routes in Worker entry:
+
+```ts
+import { mountSetupMenuRoutes } from './routes/setupMenu';
+mountSetupMenuRoutes(app);
+```
+
+2. Bind secrets: `ADMIN_SECRET`, bot tokens.
+
+3. Call:
+
+```bash
+curl -X POST https://<your-worker>/api/bots/setup-menu-all \
+  -H "Authorization: Bearer <ADMIN_SECRET>"
+
+curl -X POST https://<your-worker>/api/bots/main/setup-menu \
+  -H "Authorization: Bearer <ADMIN_SECRET>"
 ```
 
 ## Handler usage
@@ -56,17 +58,24 @@ curl -X POST https://<worker>/api/bots/setup-menu-all
 ```ts
 import { getInlineKeyboardForBot } from '../lib/botGateway';
 
-await sendMessage(chatId, welcomeText, {
+await sendMessage(botId, chatId, welcomeText, {
   reply_markup: getInlineKeyboardForBot('erotica'),
 });
 ```
 
 ## Test matrix
 
-1. Menu button visible for both bots
-2. Tap opens Mini App with valid `initData`
-3. `/start` includes working inline WebApp button
-4. Stars `openInvoice` still works inside Mini App
-5. Erotica URL includes `?bot=erotica`
+1. Menu button visible bottom-left for both bots  
+2. Tap opens Mini App; `Telegram.WebApp.initData` non-empty  
+3. `/start` includes working inline WebApp button  
+4. Stars `openInvoice` still works inside Mini App  
+5. Erotica opens with `?bot=erotica`  
+6. Unauthorized `POST /api/bots/setup-menu-all` → 401  
+
+## Compliance
+
+- Stars-only payment path unchanged  
+- No secrets in source  
+- Telegram Cloud SDK / Bot API only  
 
 Entity: Darrel-spell-living-trust
