@@ -26,6 +26,8 @@ export interface TelegramHandlerEnv {
 interface TelegramUpdate {
   message?: {
     chat: { id: number; type: string };
+    web_app_data?: { data?: string };
+
     text: string;
     from: { id: number; first_name: string; username?: string };
   };
@@ -63,6 +65,45 @@ export async function sendTelegramMessage(
   );
 
   return response.ok;
+}
+
+/**
+ * Handles data returned by Telegram.WebApp.sendData. The event shape is kept
+ * stable so persistence can be added without changing the Mini App contract.
+ */
+export async function handleWebAppDataUpdate(
+  update: TelegramUpdate,
+  env: TelegramHandlerEnv
+): Promise<{ status: string; type?: string }> {
+  const msg = update.message;
+  const raw = msg?.web_app_data?.data;
+  if (!msg || raw === undefined) return { status: "ignored" };
+
+  let event: Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(raw || "{}");
+    event = parsed && typeof parsed === "object"
+      ? parsed as Record<string, unknown>
+      : { type: "raw", value: String(parsed) };
+  } catch {
+    event = { type: "raw", value: raw };
+  }
+
+  const type = typeof event.type === "string" ? event.type : "raw";
+  // Persistence seam: authenticated Telegram identity + event can be written
+  // to Supabase here once the service-role persistence contract is enabled.
+  const token = env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN;
+  if (type === "onboarding_complete") {
+    await sendTelegramMessage(token, msg.chat.id,
+      "Welcome to RotationTV! Your onboarding is complete — your preferences are ready.");
+    return { status: "onboarding_acknowledged", type };
+  }
+
+  if (["preference_update", "gift_selected", "close", "raw"].includes(type)) {
+    return { status: `${type}_received`, type };
+  }
+
+  return { status: "unknown_event_received", type };
 }
 
 /**

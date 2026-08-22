@@ -37,7 +37,7 @@ import { orchestrateAgenticWorkflow, encodeState, decodeState } from "./lib/agen
 import { authenticateTelegramUser, validateTelegramData } from "./lib/telegramAuth";
 import { handleTributeWebhook, handleTributeGetSubscriptions, handleTributeGetOrders } from "./lib/tributeGateway";
 import { handleVeniceInference } from "./lib/veniceAiRouter";
-import { handleTelegramUpdate, sendTelegramMessage } from "./lib/telegramHandler";
+import { handleTelegramUpdate, handleWebAppDataUpdate, sendTelegramMessage } from "./lib/telegramHandler";
 import { initStream, endStream, getActiveStreams, recordViewer } from "./lib/streamOrchestrator";
 import { CreatorPayoutWorkflow } from "./workflows/CreatorPayoutWorkflow";
 import { trackEvent } from "./lib/analytics";
@@ -326,14 +326,15 @@ export default {
           return json({ ok: true, status: "inline_answered" });
         }
 
-        // Handle WebApp data sent from inline button
+        // Handle Telegram.WebApp.sendData events before bot routing.
         if (update.message?.web_app_data) {
-          try {
-            const data = JSON.parse(update.message.web_app_data.data || "{}");
-            return json({ ok: true, status: "web_app_data", data });
-          } catch {
-            return json({ ok: true, status: "web_app_data_invalid" });
-          }
+          const result = await handleWebAppDataUpdate(update, {
+            TELEGRAM_BOT_TOKEN: env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN_6 || "",
+            TELEGRAM_BOT_TOKEN_MAIN: env.TELEGRAM_BOT_TOKEN_MAIN || env.TELEGRAM_BOT_TOKEN_6,
+            VENICE_API_KEY: env.VENICE_API_KEY || "",
+            GEMINI_API_KEY: env.GEMINI_API_KEY || "",
+          });
+          return json({ ok: true, ...result });
         }
 
         // Check for any bot token before routing to wallet bot
