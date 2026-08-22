@@ -10,8 +10,9 @@
  * @module botGateway
  */
 
-import { getBot, listBots, registerBot } from './telegramCloudSdk';
+import { getBot, listBots, registerBot, setWebAppMenuButton } from './telegramCloudSdk';
 import { validateTelegramData } from './telegramAuth';
+import { miniAppInlineKeyboard } from './webAppButtons';
 
 export interface BotRouteConfig {
   botId: string;
@@ -90,6 +91,57 @@ export function initBotRegistry(env: Record<string, any>): void {
 }
 
 /**
+ * Apply persistent WebApp menu buttons for main + erotica (and any registered bots).
+ * Call after initBotRegistry(env). Safe to call repeatedly.
+ */
+export async function applyWebAppMenuButtons(
+  env: Record<string, any>
+): Promise<{ ok: string[]; failed: string[] }> {
+  const ok: string[] = [];
+  const failed: string[] = [];
+
+  const targets = getAllBots().map((b) => ({
+    id: b.botId,
+    text: b.isErotica || b.botId === 'erotica' ? 'Open Erotica' : 'Open RotationTV',
+    url: b.webAppUrl || 'https://rotationtv-mini-app.pages.dev',
+  }));
+
+  // Ensure at least main + erotica entries even if tokens not yet loaded in test
+  if (targets.length === 0) {
+    targets.push(
+      { id: 'main', text: 'Open RotationTV', url: 'https://rotationtv-mini-app.pages.dev' },
+      {
+        id: 'erotica',
+        text: 'Open Erotica',
+        url: 'https://rotationtv-mini-app.pages.dev?bot=erotica',
+      }
+    );
+  }
+
+  for (const t of targets) {
+    try {
+      await setWebAppMenuButton(t.id, t.text, t.url);
+      ok.push(t.id);
+    } catch (e: any) {
+      console.error(`setWebAppMenuButton failed for ${t.id}:`, e?.message || e);
+      failed.push(t.id);
+    }
+  }
+  return { ok, failed };
+}
+
+/**
+ * Inline keyboard that opens the correct Mini App for a botId.
+ */
+export function getInlineKeyboardForBot(botId: string) {
+  const bot = getBotById(botId);
+  const url = bot?.webAppUrl || 'https://rotationtv-mini-app.pages.dev';
+  const label =
+    bot?.isErotica || botId === 'erotica' ? '🚀 Open Erotica' : '🚀 Open RotationTV';
+  return miniAppInlineKeyboard(url, label);
+}
+
+/**
  * Resolve which bot a webhook URL belongs to.
  */
 export function resolveBot(pathname: string): BotRouteConfig | null {
@@ -105,7 +157,7 @@ export function resolveBot(pathname: string): BotRouteConfig | null {
   const match = pathname.match(/^\/telegram\/bot\/([^\/]+)\/webhook$/);
   if (match) {
     const botId = match[1];
-    return BOT_CONFIGS.find(b => b.botId === botId) || null;
+    return BOT_CONFIGS.find((b) => b.botId === botId) || null;
   }
 
   return null;
@@ -125,21 +177,23 @@ export async function validateWebhookRequest(
 }
 
 /**
- * Get all bot configurations.
+ * Get all bot configurations that have a token.
  */
 export function getAllBots(): BotRouteConfig[] {
-  return BOT_CONFIGS.filter(b => b.botToken.length > 0);
+  return BOT_CONFIGS.filter((b) => b.botToken.length > 0);
 }
 
 /**
  * Get a bot by its ID.
  */
 export function getBotById(botId: string): BotRouteConfig | undefined {
-  return BOT_CONFIGS.find(b => b.botId === botId);
+  return BOT_CONFIGS.find((b) => b.botId === botId);
 }
 
 export default {
   initBotRegistry,
+  applyWebAppMenuButtons,
+  getInlineKeyboardForBot,
   resolveBot,
   validateWebhookRequest,
   getAllBots,
