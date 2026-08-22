@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/telegramStars.ts",
+    "src/lib/telegramCloudSdk.ts",
+    "src/lib/botGateway.ts",
+    "src/lib/webAuth.ts",
+    "src/lib/webappSyncEngine.ts",
+    "src/hooks/useStarsPayment.ts",
+    "src/store/useStore.ts",
+    "src/entities/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

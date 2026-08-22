@@ -51,7 +51,7 @@ async function tgApiCall(botId: string, method: string, body?: any): Promise<any
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  const data = await res.json();
+  const data = await res.json() as { ok: boolean; description?: string; result?: any };
   if (!data.ok) throw new Error(`Telegram API error: ${data.description}`);
   return data.result;
 }
@@ -97,7 +97,7 @@ export async function uploadFile(botId: string, chatId: number | string, file: B
     body: formData,
   });
 
-  const data = await res.json();
+  const data = await res.json() as { ok: boolean; description?: string; result?: any };
   if (!data.ok) throw new Error(`Upload failed: ${data.description}`);
   return data.result;
 }
@@ -108,10 +108,11 @@ export async function downloadFile(botId: string, fileId: string): Promise<{ ok:
   if (!bot) throw new Error(`Bot ${botId} not registered`);
 
   const fileRes = await fetch(`https://api.telegram.org/bot${bot.botToken}/getFile?file_id=${fileId}`);
-  const fileData = await fileRes.json();
+  const fileData = await fileRes.json() as { ok: boolean; description?: string; result?: { file_path?: string } };
   if (!fileData.ok) return { ok: false, error: fileData.description };
 
-  const filePath = fileData.result.file_path;
+  const filePath = fileData.result?.file_path;
+  if (!filePath) return { ok: false, error: 'missing file_path' };
   const url = `https://api.telegram.org/file/bot${bot.botToken}/${filePath}`;
   return { ok: true, url };
 }

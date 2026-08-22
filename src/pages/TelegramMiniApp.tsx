@@ -290,7 +290,7 @@ function GiftsScreen({ user, onSendGift, gifts }) {
             <div style={{ fontSize: 28 }}>{g.emoji}</div>
             <div style={{ fontSize: 11, fontWeight: 700, marginTop: 4, color: C.text }}>{g.name}</div>
             <div style={{ fontSize: 10, color: C.neon }}>{fmt(g.stars, 0)} RTV</div>
-            <div style={{ fontSize: 9, color: C.muted }>${fmt(g.price_usd)}</div>
+            <div style={{ fontSize: 9, color: C.muted }}>${fmt(g.price_usd)}</div>
           </button>
         ))}
       </div>

@@ -15,7 +15,7 @@ export function useStarsPayment() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'gift', item_id: item.id, stars_amount: item.stars, title: item.label }),
       });
-      const data = await res.json();
+      const data = await res.json() as { ok?: boolean; invoice_url?: string };
       if (!data.ok || !data.invoice_url) { setPaying(false); return 'error'; }
       if (tg?.openInvoice) {
         return new Promise<string>((resolve) => {

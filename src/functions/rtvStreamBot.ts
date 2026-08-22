@@ -60,7 +60,7 @@ export default async function handler(req: Request): Promise<Response> {
         const gifts = (data.gifts || []).map(g => `${g.emoji} ${g.name}: ${g.stars} ⭐`).join('\n');
         responseText = `🎁 Available Gifts\n\n${gifts}\n\nUse: /gift [name] [streamer]`;
       } else if (text === '/pk' || text === '/pk@base44_229784_bot') {
-        responseText = `⚔️ PK Battle\n\nChallenge a creator!\nUse: /pk [streamer] [stake]\nExample: /pk @streamer 500\n\nWinner takes the pot!';
+        responseText = `⚔️ PK Battle\n\nChallenge a creator!\nUse: /pk [streamer] [stake]\nExample: /pk @streamer 500\n\nWinner takes the pot!`;
       } else if (text === '/subscribe' || text === '/subscribe@base44_229784_bot') {
         const res = await fetch(`${STREAM_API}/api/subscriptions/tiers`);
         const data = await res.json();
