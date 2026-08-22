@@ -1,16 +1,1 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: rtv-kimi-cloud
-  labels:
-    app: rtv-kimi-cloud
-    entity: darrel-spell-living-trust
-spec:
-  type: ClusterIP
-  selector:
-    app: rtv-kimi-cloud
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
-      protocol: TCP
+# REMOVED — kimi-cloud k8s cancelled.
